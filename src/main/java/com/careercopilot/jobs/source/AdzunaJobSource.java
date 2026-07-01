@@ -7,23 +7,31 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /**
  * Adapter for the Adzuna search API. Built now but only invoked when {@code ADZUNA} is present in
- * {@code jobs.adapters.enabled} and app_id/app_key are configured. Kept behind that flag until keys
- * are provisioned.
+ * {@code jobs.adapters.enabled} and app_id/app_key are configured. The {@code country} config
+ * scopes results to a region (e.g. {@code in} for India); {@code pages} controls how many result
+ * pages are pulled per run.
  */
 @Component
 public class AdzunaJobSource implements JobSourceAdapter {
+
+  private static final Logger log = LoggerFactory.getLogger(AdzunaJobSource.class);
 
   private final RestClient restClient;
   private final String appId;
   private final String appKey;
   private final String country;
   private final int resultsPerPage;
+  private final int pages;
   private final String currency;
 
   public AdzunaJobSource(
@@ -33,12 +41,14 @@ public class AdzunaJobSource implements JobSourceAdapter {
       @Value("${jobs.adzuna.app-key:}") String appKey,
       @Value("${jobs.adzuna.country:us}") String country,
       @Value("${jobs.adzuna.results-per-page:50}") int resultsPerPage,
+      @Value("${jobs.adzuna.pages:3}") int pages,
       @Value("${jobs.adzuna.currency:USD}") String currency) {
     this.restClient = builder.baseUrl(baseUrl).build();
     this.appId = appId;
     this.appKey = appKey;
     this.country = country;
     this.resultsPerPage = resultsPerPage;
+    this.pages = pages;
     this.currency = currency;
   }
 
@@ -52,16 +62,28 @@ public class AdzunaJobSource implements JobSourceAdapter {
     if (appId.isBlank() || appKey.isBlank()) {
       throw new IllegalStateException("Adzuna app-id/app-key not configured");
     }
+    List<NormalizedJob> jobs = new ArrayList<>();
+    for (int page = 1; page <= pages; page++) {
+      List<NormalizedJob> pageJobs = fetchPage(page);
+      if (pageJobs.isEmpty()) {
+        break; // no more results
+      }
+      jobs.addAll(pageJobs);
+    }
+    return jobs;
+  }
+
+  private List<NormalizedJob> fetchPage(int page) {
     JsonNode root =
         restClient
             .get()
             .uri(
                 uri ->
-                    uri.path("/v1/api/jobs/{country}/search/1")
+                    uri.path("/v1/api/jobs/{country}/search/{page}")
                         .queryParam("app_id", appId)
                         .queryParam("app_key", appKey)
                         .queryParam("results_per_page", resultsPerPage)
-                        .build(country))
+                        .build(country, page))
             .retrieve()
             .body(JsonNode.class);
     List<NormalizedJob> jobs = new ArrayList<>();
@@ -82,9 +104,7 @@ public class AdzunaJobSource implements JobSourceAdapter {
         node.path("company").hasNonNull("display_name")
             ? node.path("company").get("display_name").asText()
             : null,
-        node.path("location").hasNonNull("display_name")
-            ? node.path("location").get("display_name").asText()
-            : null,
+        location(node),
         false,
         text(node, "contract_time"),
         salary(node, "salary_min"),
@@ -97,6 +117,23 @@ public class AdzunaJobSource implements JobSourceAdapter {
         created(node),
         null,
         null);
+  }
+
+  /**
+   * Builds the location string from Adzuna's {@code area} array (which includes the country, e.g.
+   * {@code ["India","Karnataka","Bengaluru"]}) so country-level location searches match. Falls back
+   * to {@code display_name} when {@code area} is absent.
+   */
+  private static String location(JsonNode node) {
+    JsonNode area = node.path("location").path("area");
+    if (area.isArray() && !area.isEmpty()) {
+      return StreamSupport.stream(area.spliterator(), false)
+          .map(JsonNode::asText)
+          .collect(Collectors.joining(", "));
+    }
+    return node.path("location").hasNonNull("display_name")
+        ? node.path("location").get("display_name").asText()
+        : null;
   }
 
   private static String text(JsonNode node, String field) {

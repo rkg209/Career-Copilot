@@ -30,13 +30,20 @@ jobs:
   ingestion:
     cron: ${JOBS_INGESTION_CRON:0 0 */6 * * *}
   adapters:
-    enabled: ${JOBS_ADAPTERS_ENABLED:REMOTEOK}
+    enabled: ${JOBS_ADAPTERS_ENABLED:REMOTEOK,GREENHOUSE}
   remoteok:
     base-url: ${REMOTEOK_BASE_URL:https://remoteok.com}
+  greenhouse:
+    base-url: ${GREENHOUSE_BASE_URL:https://boards-api.greenhouse.io}
+    companies: ${GREENHOUSE_COMPANIES:databricks,gitlab,airbnb,coinbase,stripe}
+  lever:
+    base-url: ${LEVER_BASE_URL:https://api.lever.co}
+    companies: ${LEVER_COMPANIES:}
   adzuna:
     base-url: ${ADZUNA_BASE_URL:https://api.adzuna.com}
     app-id: ${ADZUNA_APP_ID:}
     app-key: ${ADZUNA_APP_KEY:}
     country: ${ADZUNA_COUNTRY:us}
     results-per-page: ${ADZUNA_RESULTS_PER_PAGE:50}
+    pages: ${ADZUNA_PAGES:3}
     currency: ${ADZUNA_CURRENCY:USD}

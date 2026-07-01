@@ -5,5 +5,7 @@ public enum JobSource {
   ADZUNA,
   REMOTEOK,
   USAJOBS,
-  MANUAL_PASTE
+  MANUAL_PASTE,
+  GREENHOUSE,
+  LEVER
 }

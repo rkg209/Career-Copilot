@@ -18,7 +18,7 @@ class AdzunaJobSourceTest {
   private static final String BASE_URL = "https://adzuna.test";
 
   @Test
-  void fetch_mapsResults() {
+  void fetch_mapsResults_usingDisplayNameFallback() {
     String body =
         """
         {"results": [
@@ -28,7 +28,7 @@ class AdzunaJobSourceTest {
            "salary_min": 100000, "salary_max": 130000, "contract_time": "full_time"}
         ]}
         """;
-    AdzunaJobSource source = source(body, "app-id", "app-key");
+    AdzunaJobSource source = source(body, "us");
 
     List<NormalizedJob> jobs = source.fetch();
 
@@ -46,18 +46,37 @@ class AdzunaJobSourceTest {
   }
 
   @Test
+  void fetch_buildsLocationFromAreaArray_includingCountry() {
+    String body =
+        """
+        {"results": [
+          {"id": "b2", "title": "AI Engineer", "company": {"display_name": "Acme India"},
+           "location": {"display_name": "Bengaluru, Karnataka",
+                        "area": ["India", "Karnataka", "Bengaluru"]},
+           "description": "ml", "redirect_url": "https://adzuna.test/b2"}
+        ]}
+        """;
+    AdzunaJobSource source = source(body, "in");
+
+    NormalizedJob job = source.fetch().get(0);
+
+    assertThat(job.location()).contains("India");
+    assertThat(job.location()).isEqualTo("India, Karnataka, Bengaluru");
+  }
+
+  @Test
   void fetch_withoutCredentials_throws() {
     AdzunaJobSource source =
-        new AdzunaJobSource(RestClient.builder(), BASE_URL, "", "", "us", 50, "USD");
+        new AdzunaJobSource(RestClient.builder(), BASE_URL, "", "", "us", 50, 1, "USD");
     assertThatThrownBy(source::fetch).isInstanceOf(IllegalStateException.class);
   }
 
-  private AdzunaJobSource source(String responseBody, String appId, String appKey) {
+  private AdzunaJobSource source(String responseBody, String country) {
     RestClient.Builder builder = RestClient.builder();
     MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
     server
-        .expect(requestTo(containsString("/v1/api/jobs/us/search/1")))
+        .expect(requestTo(containsString("/v1/api/jobs/" + country + "/search/1")))
         .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
-    return new AdzunaJobSource(builder, BASE_URL, appId, appKey, "us", 50, "USD");
+    return new AdzunaJobSource(builder, BASE_URL, "app-id", "app-key", country, 50, 1, "USD");
   }
 }
