@@ -10,12 +10,17 @@
 
 ## Current Phase
 
-**Phase 2 — Candidate Profile & Experience Corpus** (next)
-Structured master profile + free-text experience entries embedded into pgvector (private per user).
+**Phase 3 — Resume Tailoring** (next)
 
 **Done:**
 - **Phase 0 — Foundation & Walking Skeleton** — Spring Boot skeleton, Postgres+pgvector, JWT auth, React shell, CI, first deploy.
-- **Phase 1 — Job Ingestion / Portal** — pluggable `JobSourceAdapter` (RemoteOK live, Adzuna built/disabled, manual paste), normalized `job_postings`, public browse/search, React portal. Code complete, 39/39 tests green. **Deploy checkpoint 1 (DigitalOcean redeploy) still pending.**
+- **Phase 1 — Job Ingestion / Portal** — pluggable `JobSourceAdapter` (RemoteOK live, Adzuna built/disabled, manual paste), normalized `job_postings`, public browse/search, React portal. Code complete. **Deploy checkpoint 1 (DigitalOcean redeploy) still pending.**
+- **Phase 2 — Candidate Profile & Experience Corpus** — `candidate_profiles` + `experience_entries` (V6–V8), owner-scoped profile/experience CRUD, async embedding via `EmbeddingGateway` (Ollama `nomic-embed-text`, 768-dim, PII-redacted, token-logged), hash-based re-embed detection, `findTopKByVector` retrieval primitive, React profile page. Code complete, 81/81 tests green. **Deploy pending (ships with checkpoint 1). Prod embeddings stay PENDING until `OLLAMA_BASE_URL` is live; retry sweep picks them up.**
+
+> Embedding convention (set in Phase 2): all embedding calls go through `shared/EmbeddingGateway`
+> (never `EmbeddingModel` directly). Model/dimension are config-driven; `vector(768)` columns must
+> match `EMBEDDING_DIMENSION`. Vector mapping uses `hibernate-vector` (`@JdbcTypeCode(SqlTypes.VECTOR)`),
+> retrieval uses HQL `cosine_distance()`.
 
 > Enum convention (set in Phase 1): native Postgres `CREATE TYPE ... AS ENUM` mapped with Hibernate
 > `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`. Note: `users.id` is `UUID` (deployed in Phase 0), so all

@@ -5,6 +5,17 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  ai:
+    model:
+      chat: none
+      embedding: ollama
+    ollama:
+      base-url: http://localhost:11434
+      init:
+        pull-model-strategy: never
+      embedding:
+        options:
+          model: nomic-embed-text
 
 jwt:
   secret: test-jwt-signing-secret-not-for-production-use-only-32bytes-min
@@ -12,6 +23,11 @@ jwt:
 
 # Scheduled ingestion cron is 6-hourly and never fires within a test run; the ingestion integration
 # test drives a stub adapter directly. Disable any live source by default here as defence-in-depth.
+# Retry sweep cron never fires in tests (Feb 31); EmbeddingGateway is mocked in all tests.
+embedding:
+  dimension: 768
+  retry-cron: "0 0 5 31 2 ?"
+
 jobs:
   adapters:
     enabled: MANUAL_PASTE

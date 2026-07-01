@@ -24,6 +24,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new Error(body || `Request failed with status ${response.status}`);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -126,5 +130,92 @@ export function pasteJob(req: JobPasteRequest, token: string): Promise<JobPostin
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(req),
+  });
+}
+
+export interface Profile {
+  headline: string | null;
+  summary: string | null;
+  location: string | null;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  targetRoles: string[];
+  targetLocations: string[];
+  openToRemote: boolean;
+}
+
+export interface ExperienceRequest {
+  role: string;
+  company: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+  description?: string;
+  achievements?: string[];
+  skillsUsed?: string[];
+}
+
+export interface Experience {
+  id: number;
+  role: string;
+  company: string;
+  location: string | null;
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+  description: string | null;
+  achievements: string[];
+  skillsUsed: string[];
+  embeddingStatus: "PENDING" | "EMBEDDED";
+  createdAt: string;
+  updatedAt: string;
+}
+
+function authHeader(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}` };
+}
+
+export function getProfile(token: string): Promise<Profile> {
+  return request<Profile>("/api/v1/profile", { headers: authHeader(token) });
+}
+
+export function putProfile(profile: Profile, token: string): Promise<Profile> {
+  return request<Profile>("/api/v1/profile", {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(profile),
+  });
+}
+
+export function listExperience(token: string): Promise<Experience[]> {
+  return request<Experience[]>("/api/v1/profile/experience", { headers: authHeader(token) });
+}
+
+export function addExperience(req: ExperienceRequest, token: string): Promise<Experience> {
+  return request<Experience>("/api/v1/profile/experience", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function updateExperience(
+  id: number,
+  req: ExperienceRequest,
+  token: string,
+): Promise<Experience> {
+  return request<Experience>(`/api/v1/profile/experience/${id}`, {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function deleteExperience(id: number, token: string): Promise<void> {
+  return request<void>(`/api/v1/profile/experience/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
   });
 }

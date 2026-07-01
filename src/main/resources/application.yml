@@ -12,6 +12,17 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  ai:
+    model:
+      chat: none
+      embedding: ollama
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: never
+      embedding:
+        options:
+          model: ${EMBEDDING_MODEL:nomic-embed-text}
 
 management:
   endpoints:
@@ -25,6 +36,10 @@ jwt:
 
 cors:
   allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+embedding:
+  dimension: ${EMBEDDING_DIMENSION:768}
+  retry-cron: ${EMBEDDING_RETRY_CRON:0 */10 * * * *}
 
 jobs:
   ingestion:

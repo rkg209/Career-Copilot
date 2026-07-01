@@ -5,10 +5,14 @@
 | Field | Value |
 |---|---|
 | Phase | 0 — Foundation & Walking Skeleton |
-| Status | APPROVED |
+| Status | IMPLEMENTED |
 | Version | 1.0 |
 | Author | Rahul |
-| Last Updated | 2026-06-30 |
+| Last Updated | 2026-07-02 |
+
+> **Implementation note (2026-07-02):** All Phase 0 features implemented, tested (Testcontainers),
+> CI green, and deployed to DigitalOcean (first deploy done). Status flipped APPROVED → IMPLEMENTED
+> retroactively — the flip was missed at phase close.
 
 ---
 
@@ -269,15 +273,15 @@ GET /api/v1/auth/me
 
 ## Definition of Done
 
-- [ ] Spec status set to APPROVED before implementation begins
-- [ ] `POST /api/v1/auth/register` works end-to-end
-- [ ] `POST /api/v1/auth/login` returns a valid JWT
-- [ ] `GET /api/v1/auth/me` returns user info with valid JWT, 401 without
-- [ ] V1 + V2 Flyway migrations apply cleanly
-- [ ] `AuthIntegrationTest` and `SecurityIntegrationTest` pass with Testcontainers
-- [ ] GitHub Actions CI passes on `main`
-- [ ] React shell renders login/register UI (no 404 on root)
-- [ ] App live on DigitalOcean at configured domain
-- [ ] `/review` checklist passes
-- [ ] CLAUDE.md updated to Phase 1
-- [ ] Spec status set to IMPLEMENTED
+- [x] Spec status set to APPROVED before implementation begins
+- [x] `POST /api/v1/auth/register` works end-to-end
+- [x] `POST /api/v1/auth/login` returns a valid JWT
+- [x] `GET /api/v1/auth/me` returns user info with valid JWT, 401 without
+- [x] V1 + V2 Flyway migrations apply cleanly
+- [x] `AuthIntegrationTest` and `SecurityIntegrationTest` pass with Testcontainers
+- [x] GitHub Actions CI passes on `main`
+- [x] React shell renders login/register UI (no 404 on root)
+- [x] App live on DigitalOcean at configured domain
+- [x] `/review` checklist passes
+- [x] CLAUDE.md updated to Phase 1
+- [x] Spec status set to IMPLEMENTED

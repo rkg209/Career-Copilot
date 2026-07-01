@@ -16,6 +16,15 @@
 > `MANUAL_PASTE` (Adzuna built, disabled by default). **Remaining before full sign-off: DigitalOcean
 > redeploy + prod smoke test** (the two unchecked DoD items below).
 
+> **Amendment 1 (2026-07-02) — keyless ATS adapters:** Post-spec, two additional adapters were added
+> behind the same `JobSourceAdapter` interface with zero controller/ingestion changes (validating
+> FR-1.6): `GreenhouseJobSource` and `LeverJobSource` (both keyless public ATS board APIs, company
+> lists config-driven via `GREENHOUSE_COMPANIES` / `LEVER_COMPANIES`). Migration
+> `V5__add_ats_job_sources.sql` additively extends the `job_source` enum with `GREENHOUSE` and
+> `LEVER`. Default enabled adapters are now `REMOTEOK,GREENHOUSE` (FR-1.1's "two real external APIs"
+> is satisfied by these; Adzuna remains built-but-disabled pending API keys). Test suite is now
+> 45/45 (adds `GreenhouseJobSourceTest`, `LeverJobSourceTest`).
+
 > **Schema reconciliation note (applies to all Phase 1+ specs):** Phase 0 deployed `users.id` as
 > `UUID` (see `V1__initial_schema.sql`), while `planning/04-database-schema.sql` models it as
 > `BIGSERIAL`. Because migrations must be additive, this spec keeps `BIGSERIAL` primary keys for new
@@ -321,7 +330,7 @@ External HTTP clients are stubbed (WireMock or MockWebServer); no live external 
 - [x] Adzuna + RemoteOK adapters ingest real postings; adding a new adapter needs no controller change
 - [x] Dedup verified: re-ingesting the same source page inserts zero duplicate rows
 - [x] V3 + V4 Flyway migrations apply cleanly
-- [x] All listed unit + integration tests pass with Testcontainers (39/39)
+- [x] All listed unit + integration tests pass with Testcontainers (45/45 after Amendment 1)
 - [x] React portal lists, filters, opens, and pastes jobs against the live API
 - [x] `/review` checklist passes
 - [x] CLAUDE.md updated to Phase 2

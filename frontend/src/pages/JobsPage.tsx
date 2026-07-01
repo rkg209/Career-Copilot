@@ -45,7 +45,8 @@ export function JobsPage() {
     <div>
       <h1>Jobs</h1>
       <p>
-        <Link to="/">Home</Link> · <Link to="/jobs/paste">Paste a job</Link>
+        <Link to="/">Home</Link> · <Link to="/jobs/paste">Paste a job</Link> ·{" "}
+        <Link to="/profile">My profile</Link>
       </p>
 
       <form onSubmit={handleSearch}>

@@ -1,5 +1,5 @@
 Read `specs/specs/phase-0-foundation.md`, then generate an implementation plan.Save this plan to `.claude/plans/specs/phase-0-foundation.md`
 
 
- Read `specs/00-foundation`, then generate an implementation plan.Save this plan to `.claude/plans/specs/phase-0-foundation.md`
-   
+Read `specs/00-foundation`, then generate an implementation plan.Save this plan to `.claude/plans/specs/phase-0-foundation.md`
+

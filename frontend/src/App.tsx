@@ -5,6 +5,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { JobsPage } from "./pages/JobsPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
 import { PasteJobPage } from "./pages/PasteJobPage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/paste" element={<PasteJobPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
       </Routes>
     </BrowserRouter>

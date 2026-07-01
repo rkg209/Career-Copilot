@@ -5,13 +5,21 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Candidate Profile & Experience Corpus |
-| Status | DRAFT |
-| Version | 1.0 |
+| Status | APPROVED |
+| Version | 1.1 |
 | Author | Rahul |
-| Last Updated | 2026-07-01 |
+| Last Updated | 2026-07-02 |
 
 > **Schema reconciliation note:** New tables use `BIGSERIAL` PKs; every `user_id` FK is `UUID` to match
-> the deployed `users.id`. Confirm before APPROVED. See Phase 1 spec for rationale.
+> the deployed `users.id`. Confirmed against deployed `V1__initial_schema.sql` (`users.id` is UUID).
+>
+> **v1.1 amendments (2026-07-02):**
+> - Migrations renumbered **V5–V7 → V6–V8** (`V5__add_ats_job_sources.sql` already exists on main).
+> - Embedding model decided: **Ollama `nomic-embed-text`, 768 dimensions**, dev AND prod — column is
+>   `vector(768)`. No OpenAI/OpenRouter embedding dependency in this phase.
+> - Graceful degradation: prod has no Ollama endpoint yet. Embedding failure must never fail CRUD —
+>   entries stay `embeddingStatus: PENDING` and a scheduled retry sweep re-attempts un-embedded rows
+>   until `OLLAMA_BASE_URL` is reachable.
 
 ---
 
@@ -68,7 +76,7 @@ enters their real experience once and it becomes retrievable, semantically-searc
 ### New Tables
 
 ```sql
--- V5__candidate_profiles.sql
+-- V6__candidate_profiles.sql
 CREATE TABLE candidate_profiles (
     id                  BIGSERIAL       PRIMARY KEY,
     user_id             UUID            NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -89,8 +97,8 @@ CREATE INDEX idx_candidate_profiles_user_id ON candidate_profiles (user_id);
 ```
 
 ```sql
--- V6__experience_entries.sql
--- Embedding dimension MUST match the configured embedding model (see appendix decision).
+-- V7__experience_entries.sql
+-- Embedding dimension MUST match the configured embedding model (nomic-embed-text = 768).
 CREATE TABLE experience_entries (
     id                  BIGSERIAL       PRIMARY KEY,
     user_id             UUID            NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -103,8 +111,8 @@ CREATE TABLE experience_entries (
     description         TEXT,
     achievements        TEXT[]          NOT NULL DEFAULT '{}',
     skills_used         TEXT[]          NOT NULL DEFAULT '{}',
-    embedding           vector(1536),                       -- match text-embedding-3-small dim
-    text_hash           CHAR(64),                           -- SHA-256 hex of embedded text
+    embedding           vector(768),                        -- match nomic-embed-text dim
+    text_hash           VARCHAR(64),                        -- SHA-256 hex of embedded text
     embedded_at         TIMESTAMPTZ,
     created_at          TIMESTAMPTZ     NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ     NOT NULL DEFAULT now(),
@@ -118,7 +126,7 @@ CREATE INDEX idx_experience_entries_embedding_hnsw
 ```
 
 ```sql
--- V7__token_usage_log.sql   (shared infra table; introduced here for embedding logging)
+-- V8__token_usage_log.sql   (shared infra table; introduced here for embedding logging)
 CREATE TYPE llm_task AS ENUM ('EXTRACTION','TAILORING','SCORING_AUGMENTATION','COVER_LETTER','EMBEDDING');
 CREATE TABLE token_usage_log (
     id                BIGSERIAL   PRIMARY KEY,
@@ -139,9 +147,9 @@ CREATE INDEX idx_token_usage_log_called_at ON token_usage_log (called_at);
 
 | Migration | File | Description |
 |---|---|---|
-| V5 | `V5__candidate_profiles.sql` | `candidate_profiles` table |
-| V6 | `V6__experience_entries.sql` | `experience_entries` + HNSW vector index |
-| V7 | `V7__token_usage_log.sql` | `llm_task` enum + `token_usage_log` audit table |
+| V6 | `V6__candidate_profiles.sql` | `candidate_profiles` table |
+| V7 | `V7__experience_entries.sql` | `experience_entries` + HNSW vector index |
+| V8 | `V8__token_usage_log.sql` | `llm_task` enum + `token_usage_log` audit table |
 
 ---
 
@@ -250,7 +258,7 @@ No `ChatClient` generation tasks. This phase uses **embedding** calls only, rout
 | Task | Experience embedding |
 | Tier | EXTRACTION-class (cheap embedding model) |
 | `llm_task` enum | `EMBEDDING` |
-| Model | config-driven (`spring.ai.*`), dimension must equal the `vector(N)` column |
+| Model | `nomic-embed-text` via Ollama, config-driven (`spring.ai.ollama.*`), 768 dims = `vector(768)` column |
 | Guardrails | PiiRedactionAdvisor (strip PII before embedding + before logging text) |
 
 There is no JSON schema / grounding / injection guard here (no free-form generation, no untrusted JD input).
@@ -294,24 +302,25 @@ N/A for this phase.
 ## Deploy Steps
 
 ### Pre-deploy Checklist
-- [ ] `./mvnw test` green; `./mvnw spotless:check` clean
-- [ ] V5–V7 migrations reviewed (additive)
-- [ ] Embedding model + dimension confirmed to match `vector(N)` column
-- [ ] Embedding provider key stored as DO secret
+- [ ] `./mvnw test` green
+- [ ] V6–V8 migrations reviewed (additive)
+- [ ] Embedding model + dimension confirmed to match `vector(768)` column
+- [ ] `OLLAMA_BASE_URL` set (or accepted that prod entries stay PENDING until it is)
 
 ### Environment Variables Required
 
 | Variable | Description | Example |
 |---|---|---|
-| `EMBEDDING_MODEL` | Embedding model id | `text-embedding-3-small` |
-| `EMBEDDING_DIMENSION` | Must equal vector column dim | `1536` |
-| `OPENROUTER_API_KEY` / `OLLAMA_BASE_URL` | Provider credentials (prod/dev) | `{secret}` |
+| `EMBEDDING_MODEL` | Embedding model id | `nomic-embed-text` |
+| `EMBEDDING_DIMENSION` | Must equal vector column dim | `768` |
+| `OLLAMA_BASE_URL` | Ollama endpoint (dev: local; prod: droplet/none yet) | `http://localhost:11434` |
 
 ### DigitalOcean Deploy Steps
 1. Push to `main`; green CI.
-2. DO auto-deploys; Flyway applies V5–V7.
-3. Smoke: `PUT /profile` then `POST /profile/experience`; poll `GET /profile/experience` until
-   `embeddingStatus: EMBEDDED`; confirm `token_usage_log` has an `EMBEDDING` row.
+2. DO auto-deploys; Flyway applies V6–V8.
+3. Smoke: `PUT /profile` then `POST /profile/experience`; poll `GET /profile/experience`. With no prod
+   Ollama, entries remain `embeddingStatus: PENDING` (expected, non-fatal); once `OLLAMA_BASE_URL` is
+   live, the retry sweep embeds them — then confirm `token_usage_log` has an `EMBEDDING` row.
 
 ---
 
