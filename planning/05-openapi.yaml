@@ -1,0 +1,1234 @@
+```yaml
+openapi: 3.0.3
+info:
+  title: Career Copilot API
+  description: |
+    REST API for Career Copilot — an AI-powered career assistant that tailors
+    resumes, scores ATS compatibility, tracks job applications, and surfaces
+    anonymised company interview intelligence.
+
+    All endpoints are versioned under `/api/v1`. Authenticated endpoints require
+    a Bearer JWT obtained from `/api/v1/auth/login` or `/api/v1/auth/register`.
+    The token must be included in the `Authorization` header on every protected
+    request. User identity is always derived from the token; no endpoint accepts
+    a `userId` in the request body or query string.
+  version: 1.0.0
+  contact:
+    name: Career Copilot Engineering
+
+servers:
+  - url: /api/v1
+    description: Versioned API root
+
+# ---------------------------------------------------------------------------
+# Security schemes
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT issued by POST /auth/register or POST /auth/login.
+        Include as: Authorization: Bearer <token>
+
+# ---------------------------------------------------------------------------
+# Reusable schemas
+# ---------------------------------------------------------------------------
+  schemas:
+
+    # -----------------------------------------------------------------------
+    # Shared / primitive types
+    # -----------------------------------------------------------------------
+
+    ErrorResponse:
+      type: object
+      required: [status, error, message, timestamp]
+      properties:
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: Validation failed for field 'email'
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+          example: /api/v1/auth/register
+        fieldErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          example: email
+        message:
+          type: string
+          example: must be a valid email address
+        rejectedValue:
+          type: string
+          nullable: true
+
+    PageMetadata:
+      type: object
+      required: [page, size, totalElements, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 0
+          example: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 142
+        totalPages:
+          type: integer
+          example: 8
+
+    # -----------------------------------------------------------------------
+    # Auth schemas
+    # -----------------------------------------------------------------------
+
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: jane.doe@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          example: S3cur3P@ssw0rd
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Jane Doe
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: jane.doe@example.com
+        password:
+          type: string
+          format: password
+          example: S3cur3P@ssw0rd
+
+    AuthResponse:
+      type: object
+      required: [token, userId, displayName, expiresAt]
+      properties:
+        token:
+          type: string
+          description: Signed JWT. Include in Authorization header as Bearer <token>.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        userId:
+          type: integer
+          format: int64
+          example: 42
+        displayName:
+          type: string
+          example: Jane Doe
+        expiresAt:
+          type: string
+          format: date-time
+
+    # -----------------------------------------------------------------------
+    # Job schemas
+    # -----------------------------------------------------------------------
+
+    JobPostingResponse:
+      type: object
+      required: [id, title, company, fullText, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1001
+        title:
+          type: string
+          example: Senior Software Engineer
+        company:
+          type: string
+          example: Acme Corp
+        location:
+          type: string
+          nullable: true
+          example: San Francisco, CA
+        remoteType:
+          type: string
+          nullable: true
+          enum: [remote, hybrid, onsite]
+        employmentType:
+          type: string
+          nullable: true
+          enum: [full_time, part_time, contract, internship]
+        salaryMin:
+          type: integer
+          nullable: true
+          example: 120000
+        salaryMax:
+          type: integer
+          nullable: true
+          example: 160000
+        salaryCurrency:
+          type: string
+          nullable: true
+          example: USD
+        skills:
+          type: array
+          items:
+            type: string
+          example: [Java, Spring Boot, PostgreSQL]
+        responsibilities:
+          type: array
+          items:
+            type: string
+        fullText:
+          type: string
+          description: Complete job description text.
+        url:
+          type: string
+          nullable: true
+          format: uri
+        postedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+        sourceId:
+          type: string
+          nullable: true
+          example: adzuna
+        createdAt:
+          type: string
+          format: date-time
+
+    JobPostingPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobPostingResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    JobSearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Free-text keyword search against title, company, and fullText.
+          example: backend engineer
+        location:
+          type: string
+          nullable: true
+          example: New York
+        remoteType:
+          type: string
+          nullable: true
+          enum: [remote, hybrid, onsite]
+        employmentType:
+          type: string
+          nullable: true
+          enum: [full_time, part_time, contract, internship]
+        salaryMin:
+          type: integer
+          nullable: true
+        salaryMax:
+          type: integer
+          nullable: true
+        skills:
+          type: array
+          items:
+            type: string
+          description: Filter to postings that include all listed skills.
+
+    ManualJdPasteRequest:
+      type: object
+      required: [fullText, title, company]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Staff Engineer
+        company:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Globex Corporation
+        fullText:
+          type: string
+          minLength: 50
+          maxLength: 50000
+          description: |
+            The complete pasted job description. Treated as untrusted input;
+            passed through PromptInjectionGuard before any processing.
+        location:
+          type: string
+          nullable: true
+        remoteType:
+          type: string
+          nullable: true
+          enum: [remote, hybrid, onsite]
+        url:
+          type: string
+          nullable: true
+          format: uri
+
+    # -----------------------------------------------------------------------
+    # Profile schemas
+    # -----------------------------------------------------------------------
+
+    ProfileResponse:
+      type: object
+      required: [userId, createdAt, updatedAt]
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 42
+        headline:
+          type: string
+          nullable: true
+          example: Senior Backend Engineer | Java | Cloud
+        summary:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        linkedinUrl:
+          type: string
+          nullable: true
+          format: uri
+        githubUrl:
+          type: string
+          nullable: true
+          format: uri
+        websiteUrl:
+          type: string
+          nullable: true
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProfileRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+          maxLength: 200
+          nullable: true
+        summary:
+          type: string
+          maxLength: 5000
+          nullable: true
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        linkedinUrl:
+          type: string
+          nullable: true
+          format: uri
+          maxLength: 500
+        githubUrl:
+          type: string
+          nullable: true
+          format: uri
+          maxLength: 500
+        websiteUrl:
+          type: string
+          nullable: true
+          format: uri
+          maxLength: 500
+
+    ExperienceEntryResponse:
+      type: object
+      required: [id, company, title, startDate, isCurrent, description,
+                 achievements, skillsUsed, embeddingReady, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 7
+        company:
+          type: string
+          example: Initech
+        title:
+          type: string
+          example: Software Engineer II
+        startDate:
+          type: string
+          format: date
+          example: "2021-03-01"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2023-08-31"
+        isCurrent:
+          type: boolean
+        description:
+          type: string
+        achievements:
+          type: array
+          items:
+            type: string
+        skillsUsed:
+          type: array
+          items:
+            type: string
+        embeddingReady:
+          type: boolean
+          description: True when the embedding vector has been computed and stored.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ExperienceEntryRequest:
+      type: object
+      required: [company, title, startDate, isCurrent, description]
+      properties:
+        company:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Initech
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Software Engineer II
+        startDate:
+          type: string
+          format: date
+          example: "2021-03-01"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2023-08-31"
+        isCurrent:
+          type: boolean
+          default: false
+        description:
+          type: string
+          minLength: 10
+          maxLength: 10000
+        achievements:
+          type: array
+          items:
+            type: string
+            maxLength: 500
+          maxItems: 20
+          default: []
+        skillsUsed:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          maxItems: 50
+          default: []
+
+    # -----------------------------------------------------------------------
+    # Tailoring schemas
+    # -----------------------------------------------------------------------
+
+    TailoringRequest:
+      type: object
+      required: [jobPostingId, templateId]
+      properties:
+        jobPostingId:
+          type: integer
+          format: int64
+          example: 1001
+        templateId:
+          type: string
+          description: |
+            Identifier of a LaTeX template in the server-side template catalog.
+          example: modern-single-column
+
+    TailoringResponse:
+      type: object
+      required: [resumeVersionId, downloadUrl, previewUrl, renderStatus, createdAt]
+      properties:
+        resumeVersionId:
+          type: integer
+          format: int64
+          example: 55
+        downloadUrl:
+          type: string
+          example: /api/v1/tailoring/resumes/55/pdf
+        previewUrl:
+          type: string
+          example: /api/v1/tailoring/resumes/55
+        renderStatus:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED]
+        renderError:
+          type: string
+          nullable: true
+          description: Present only when renderStatus is FAILED.
+        llmModel:
+          type: string
+          example: gpt-4o
+        tokenCount:
+          type: integer
+          example: 3200
+        createdAt:
+          type: string
+          format: date-time
+
+    TailoringPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TailoringResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    ResumeJsonPayload:
+      type: object
+      description: |
+        Structured LLM output representing the tailored resume content.
+        This is the canonical intermediate representation between the LLM
+        and the LaTeX rendering pipeline.
+      required: [summary, workExperience, skills]
+      properties:
+        summary:
+          type: string
+          description: Professional summary paragraph tailored to the job.
+        workExperience:
+          type: array
+          items:
+            type: object
+            required: [company, title, startDate, isCurrent, bullets]
+            properties:
+              company:
+                type: string
+              title:
+                type: string
+              startDate:
+                type: string
+                format: date
+              endDate:
+                type: string
+                format: date
+                nullable: true
+              isCurrent:
+                type: boolean
+              bullets:
+                type: array
+                items:
+                  type: string
+        skills:
+          type: array
+          description: Ordered list of skill groups for the resume skills section.
+          items:
+            type: object
+            required: [category, items]
+            properties:
+              category:
+                type: string
+                example: Languages
+              items:
+                type: array
+                items:
+                  type: string
+        education:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              institution:
+                type: string
+              degree:
+                type: string
+              field:
+                type: string
+              graduationYear:
+                type: integer
+        certifications:
+          type: array
+          nullable: true
+          items:
+            type: string
+
+    CoverLetterRequest:
+      type: object
+      required: [jobPostingId]
+      properties:
+        jobPostingId:
+          type: integer
+          format: int64
+          example: 1001
+        resumeVersionId:
+          type: integer
+          format: int64
+          nullable: true
+          description: |
+            Optional. If provided, the cover letter is generated with awareness
+            of the linked resume version's content.
+        templateId:
+          type: string
+          nullable: true
+          example: cover-letter-standard
+        tone:
+          type: string
+          nullable: true
+          enum: [professional, conversational, enthusiastic]
+          default: professional
+
+    CoverLetterResponse:
+      type: object
+      required: [coverLetterId, downloadUrl, renderStatus, createdAt]
+      properties:
+        coverLetterId:
+          type: integer
+          format: int64
+          example: 12
+        resumeVersionId:
+          type: integer
+          format: int64
+          nullable: true
+        downloadUrl:
+          type: string
+          example: /api/v1/tailoring/cover-letters/12/pdf
+        renderStatus:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED]
+        renderError:
+          type: string
+          nullable: true
+        llmModel:
+          type: string
+        tokenCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # -----------------------------------------------------------------------
+    # Scoring schemas
+    # -----------------------------------------------------------------------
+
+    ScoringRequest:
+      type: object
+      required: [resumeVersionId, jobPostingId]
+      properties:
+        resumeVersionId:
+          type: integer
+          format: int64
+          example: 55
+        jobPostingId:
+          type: integer
+          format: int64
+          example: 1001
+
+    AtsGapReport:
+      type: object
+      required: [id, resumeVersionId, jobPostingId, score, missing,
+                 preferred, nearMisses, fixes, scoredAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 88
+        resumeVersionId:
+          type: integer
+          format: int64
+        jobPostingId:
+          type: integer
+          format: int64
+        score:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            Coverage score from 0.000 (no coverage) to 1.000 (full coverage).
+          example: 0.847
+        missing:
+          type: array
+          description: Required skills absent from the resume.
+          items:
+            type: string
+          example: [Kubernetes, Terraform]
+        preferred:
+          type: array
+          description: Preferred (nice-to-have) skills absent from the resume.
+          items:
+            type: string
+        nearMisses:
+          type: array
+          description: |
+            Skills semantically close to required skills but not exact matches.
+          items:
+            $ref: '#/components/schemas/NearMiss'
+        fixes:
+          type: array
+          description: Concrete, template-based suggestions for improving coverage.
+          items:
+            $ref: '#/components/schemas/ConcreteFix'
+        scoredAt:
+          type: string
+          format: date-time
+
+    NearMiss:
+      type: object
+      required: [skill, similarity, suggestedPhrase]
+      properties:
+        skill:
+          type: string
+          example: container orchestration
+        similarity:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.81
+        suggestedPhrase:
+          type: string
+          example: Kubernetes
+
+    ConcreteFix:
+      type: object
+      required: [skill, suggestedBullet, priority]
+      properties:
+        skill:
+          type: string
+          example: Terraform
+        suggestedBullet:
+          type: string
+          example: >
+            Provisioned and managed cloud infrastructure using Terraform,
+            reducing deployment time by X%.
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+
+    # -----------------------------------------------------------------------
+    # Tracker schemas
+    # -----------------------------------------------------------------------
+
+    ApplicationRequest:
+      type: object
+      required: [companyName, jobTitle]
+      properties:
+        jobPostingId:
+          type: integer
+          format: int64
+          nullable: true
+          description: |
+            Optional link to a job posting in the system. May be null if the
+            application was submitted to a job not in the system.
+        resumeVersionId:
+          type: integer
+          format: int64
+          nullable: true
+          description: The resume version submitted with this application.
+        companyName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Acme Corp
+        jobTitle:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Senior Software Engineer
+        status:
+          type: string
+          enum: [SAVED, APPLIED, PHONE_SCREEN, INTERVIEW,
+                 OFFER, REJECTED, WITHDRAWN, CLOSED]
+          default: SAVED
+        appliedAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          maxLength: 10000
+          nullable: true
+
+    ApplicationResponse:
+      type: object
+      required: [id, companyName, jobTitle, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 200
+        jobPostingId:
+          type: integer
+          format: int64
+          nullable: true
+        resumeVersionId:
+          type: integer
+          format: int64
+          nullable: true
+        companyName:
+          type: string
+          example: Acme Corp
+        jobTitle:
+          type: string
+          example: Senior Software Engineer
+        status:
+          type: string
+          enum: [SAVED, APPLIED, PHONE_SCREEN, INTERVIEW,
+                 OFFER, REJECTED, WITHDRAWN, CLOSED]
+        appliedAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ApplicationPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    InterviewLogRequest:
+      type: object
+      required: [roundType]
+      properties:
+        roundType:
+          type: string
+          enum: [PHONE, TECHNICAL, BEHAVIORAL, ONSITE, OTHER]
+        interviewDate:
+          type: string
+          format: date
+          nullable: true
+        interviewerName:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: PII — stored privately; never exposed in public intel.
+        interviewerRole:
+          type: string
+          maxLength: 200
+          nullable: true
+        questionsAsked:
+          type: array
+          items:
+            type: string
+            maxLength: 1000
+          maxItems: 50
+          default: []
+        notes:
+          type: string
+          maxLength: 20000
+          nullable: true
+          description: Free-text notes. PII risk; scrubbed during anonymization.
+        outcome:
+          type: string
+          nullable: true
+          enum: [PASSED, FAILED, PENDING, CANCELLED]
+        difficulty:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+          description: Self-rated difficulty on a 1–5 scale.
+
+    InterviewLogResponse:
+      type: object
+      required: [id, applicationId, roundType, questionsAsked, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 300
+        applicationId:
+          type: integer
+          format: int64
+          example: 200
+        roundType:
+          type: string
+          enum: [PHONE, TECHNICAL, BEHAVIORAL, ONSITE, OTHER]
+        interviewDate:
+          type: string
+          format: date
+          nullable: true
+        interviewerName:
+          type: string
+          nullable: true
+        interviewerRole:
+          type: string
+          nullable: true
+        questionsAsked:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+        outcome:
+          type: string
+          nullable: true
+          enum: [PASSED, FAILED, PENDING, CANCELLED]
+        difficulty:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+        contributedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Non-null when this log has been contributed to the public pool.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ContributionResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PUBLISHED, STAGED, ALREADY_CONTRIBUTED]
+          description: |
+            PUBLISHED — record is live in the public pool.
+            STAGED — below the minimum aggregation threshold; held in staging.
+            ALREADY_CONTRIBUTED — this log was previously contributed; no-op.
+        message:
+          type: string
+          nullable: true
+          example: >
+            Your contribution has been staged. It will be published once
+            the minimum data threshold for this company is reached.
+
+    # -----------------------------------------------------------------------
+    # Intel schemas
+    # -----------------------------------------------------------------------
+
+    CompanyIntelResponse:
+      type: object
+      required: [companyName, records]
+      properties:
+        companyName:
+          type: string
+          example: Acme Corp
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntelRecord'
+
+    IntelRecord:
+      type: object
+      required: [id, roleCategory, roundType, questions, sourceLogCount, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        roleCategory:
+          type: string
+          example: Software Engineer
+        roundType:
+          type: string
+          enum: [PHONE, TECHNICAL, BEHAVIORAL, ONSITE, OTHER]
+        questions:
+          type: array
+          items:
+            type: string
+        processNotes:
+          type: string
+          nullable: true
+        difficulty:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+          description: Averaged difficulty rating across contributing logs.
+        sourceLogCount:
+          type: integer
+          description: Number of individual interview logs that contributed to this record.
+          example: 7
+        createdAt:
+          type: string
+          format: date-time
+
+    CompanyListResponse:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+            required: [companyName, recordCount]
+            properties:
+              companyName:
+                type: string
+                example: Acme Corp
+              recordCount:
+                type: integer
+                description: Total number of intel records for this company.
+                example: 23
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # -----------------------------------------------------------------------
+    # Metrics schemas
+    # -----------------------------------------------------------------------
+
+    AtsImprovementMetrics:
+      type: object
+      required: [periodStart, periodEnd, totalScored, averageScoreBefore,
+                 averageScoreAfter, improvementRate]
+      properties:
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+        totalScored:
+          type: integer
+          description: Total number of ATS scoring operations in the period.
+        averageScoreBefore:
+          type: number
+          format: double
+          description: Average coverage score before tailoring (first score per resume).
+          nullable: true
+        averageScoreAfter:
+          type: number
+          format: double
+          description: Average coverage score after tailoring (latest score per resume).
+          nullable: true
+        improvementRate:
+          type: number
+          format: double
+          description: |
+            Fraction of resumes that improved their ATS score after tailoring.
+          minimum: 0.0
+          maximum: 1.0
+
+    SystemMetrics:
+      type: object
+      required: [periodStart, periodEnd]
+      properties:
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+        totalUsers:
+          type: integer
+        totalJobPostings:
+          type: integer
+        totalResumeVersions:
+          type: integer
+        totalTailoringRequests:
+          type: integer
+        totalScoringRequests:
+          type: integer
+        totalIntelContributions:
+          type: integer
+        llmTokenUsage:
+          type: object
+          properties:
+            totalTokens:
+              type: integer
+              format: int64
+            byTask:
+              type: object
+              additionalProperties:
+                type: integer
+                format: int64
+              example:
+                TAILORING: 1500000
+                COVER_LETTER: 300000
+                EXTRACTION: 50000
+
+  # -------------------------------------------------------------------------
+  # Reusable parameters
+  # -------------------------------------------------------------------------
+  parameters:
+
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Zero-based page index.
+
+    SizeParam:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page.
+
+    SortParam:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+      description: |
+        Sort expression in the format `field,direction` (e.g. `createdAt,desc`).
+        Multiple sort parameters are supported.
+
+  # -------------------------------------------------------------------------
+  # Reusable responses
+  # -------------------------------------------------------------------------
+  responses:
+
+    400BadRequest:
+      description: Bad request — validation failure or malformed input.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 400
+            error: Bad Request
+            message: Validation failed
+            timestamp: "2024-01-15T10:30:00Z"
+            path: /api/v1/auth/register
+            fieldErrors:
+              - field: email
+                message: must be a valid email address
+                rejectedValue: not-an-email
+
+    401Unauthorized:
+      description: Unauthorized — missing or invalid JWT.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 401
+            error: Unauthorized
+            message: JWT token is missing or invalid
+            timestamp: "2024-01-15T10:30:00Z"
+
+    403Forbidden:
+      description: Forbidden — authenticated but not the resource owner.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 403
+            error: Forbidden
+            message: You do not have access to this resource
+            timestamp: "2024-01-15T10:30:00Z"
+
+    404NotFound:
+      description: Not found — the requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 404
+            error: Not Found
+            message: Resource not found
+            timestamp: "2024-01-15T10:30:00Z"
+
+    409Conflict:
+      description: Conflict — the resource already exists.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 409
+            error: Conflict
+            message: A user with this email address already exists
+            timestamp: "2024-01-15T10:30:00Z"
+
+    422UnprocessableEntity:
+      description: |
+        Unprocessable entity — the request was well-formed but semantically
+        invalid (e.g. grounding failure in LLM output).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    429TooManyRequests:
+      description: Too many requests — rate limit exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 429
+            error: Too Many Requests
+            message: Rate limit exceeded. Retry after 60 seconds.
+            timestamp: "2024-01-15T10

@@ -1,0 +1,47 @@
+name: career-copilot
+region: nyc
+services:
+  - name: backend
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: your-github-username/career-copilot
+      branch: main
+      deploy_on_push: true
+    http_port: 8080
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    health_check:
+      http_path: /actuator/health
+    envs:
+      - key: SPRING_DATASOURCE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: SPRING_DATASOURCE_USERNAME
+        scope: RUN_TIME
+        type: SECRET
+      - key: SPRING_DATASOURCE_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: JWT_EXPIRY_SECONDS
+        scope: RUN_TIME
+        value: "86400"
+
+static_sites:
+  - name: frontend
+    source_dir: frontend
+    github:
+      repo: your-github-username/career-copilot
+      branch: main
+      deploy_on_push: true
+    build_command: npm run build
+    output_dir: dist
+
+databases:
+  - name: careercopilot-db
+    engine: PG
+    version: "16"
+    production: false

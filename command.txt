@@ -1,0 +1,211 @@
+Career Copilot — Phase 0: commands from a clean checkout to a live deploy
+==========================================================================
+Run these from the repo root (/Users/rahul/Placement/Project/1_Career_Copilot)
+unless a step says otherwise. Sections are in order; later steps assume
+earlier ones succeeded.
+
+------------------------------------------------------------------
+0. ONE-TIME MACHINE SETUP (toolchain)
+------------------------------------------------------------------
+# Homebrew must already be installed (https://brew.sh)
+
+# JDK 21 (project's pinned Java version — install even if a newer JDK
+# is already present; some Maven plugins like Spotless/google-java-format
+# break on very new JDKs)
+brew install openjdk@21
+
+# Maven
+brew install maven
+
+# Node + npm (for the frontend)
+brew install node
+
+# Docker Desktop (needed for Testcontainers integration tests + docker build)
+brew install --cask docker
+# Then launch Docker.app once manually and finish its onboarding.
+#
+# One-time fix confirmed needed on this machine's Docker Desktop version
+# (4.80 / engine 29.6.1): Testcontainers failed to connect even though
+# `docker info` worked fine from the CLI. Two things fixed it together:
+#   1. Docker Desktop Settings -> General -> uncheck "Use containerd for
+#      pulling and storing images" -> Apply & Restart.
+#   2. pom.xml pins <testcontainers.version>1.21.4</testcontainers.version>
+#      (already done in this repo) because Spring Boot 3.5.6's managed
+#      1.21.3 negotiates an old Docker API version (1.32) that this engine
+#      rejects (minimum 1.40). This is already fixed in pom.xml — nothing
+#      to do here unless you regenerate the project from scratch.
+
+# Point Maven at JDK 21 for every command below (spotless/tests need this
+# even if your default `java` is newer):
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+
+------------------------------------------------------------------
+1. FIRST-TIME PROJECT SETUP (already done once in this repo; re-run only
+   on a fresh clone)
+------------------------------------------------------------------
+git init
+mvn -N wrapper:wrapper -Dmaven=3.9.9        # generates ./mvnw, ./mvnw.cmd, .mvn/
+
+cd frontend
+npm install
+cd ..
+
+------------------------------------------------------------------
+2. RUN THE BACKEND LOCALLY
+------------------------------------------------------------------
+# Start Postgres+pgvector (service name must be exactly "db")
+docker compose up db
+# (leave this running in its own terminal, or add -d to background it)
+
+# In another terminal, set required env vars and start the app
+export JWT_SECRET="$(openssl rand -base64 48)"     # any string >=32 bytes works for dev
+export JWT_EXPIRY_SECONDS=86400
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+./mvnw spring-boot:run
+# Backend now listening on http://localhost:8080
+# Flyway applies V1__initial_schema.sql and V2__enable_pgvector.sql automatically on startup.
+
+# Smoke test in a third terminal:
+curl http://localhost:8080/actuator/health
+# -> {"status":"UP"}
+
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"password123"}'
+
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"password123"}'
+# -> {"token":"...", "expiresIn":86400}  — copy the token for the next call
+
+curl http://localhost:8080/api/v1/auth/me \
+  -H "Authorization: Bearer <token-from-login>"
+
+------------------------------------------------------------------
+3. RUN THE FRONTEND LOCALLY
+------------------------------------------------------------------
+cd frontend
+npm run dev
+# Vite dev server prints a local URL (typically http://localhost:5173)
+# Open it in a browser: root redirects to /login if not authenticated.
+cd ..
+
+------------------------------------------------------------------
+4. RUN THE TEST SUITE
+------------------------------------------------------------------
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+
+# Docker must be running — Testcontainers spins up a real Postgres+pgvector
+# container for AuthIntegrationTest and SecurityIntegrationTest.
+./mvnw test
+
+# Formatting check (must pass before every commit/deploy)
+./mvnw spotless:check
+# If it fails:
+./mvnw spotless:apply
+
+# Frontend build check
+cd frontend
+npm run build
+cd ..
+
+------------------------------------------------------------------
+5. VERIFY THE DOCKER IMAGE BUILDS
+------------------------------------------------------------------
+docker build -t careercopilot:checkpoint .
+# This is what deploy-checkpoint / CI's implicit expectations rely on.
+# Tests are NOT run inside this build (skipped via -DskipTests) — they
+# run separately via `./mvnw test` in step 4 / in CI.
+
+------------------------------------------------------------------
+6. PRE-DEPLOY CHECKLIST (mirrors .claude/commands/deploy-checkpoint.md)
+------------------------------------------------------------------
+./mvnw test                        # must be all green
+./mvnw spotless:check              # must be clean
+# Review src/main/resources/db/migration/*.sql — confirm additive only
+# (no DROP TABLE / DROP COLUMN / destructive ALTER / TRUNCATE)
+grep -riE "drop table|drop column|truncate" src/main/resources/db/migration/ || echo "No destructive migrations found"
+docker build -t careercopilot:checkpoint .   # must succeed
+
+# Secret scan — confirm nothing hardcoded (all real secrets should only
+# ever come from env vars / DO's encrypted app secrets):
+grep -rniE "password\s*=|secret\s*=|api_key\s*=" src/main/resources/ || echo "clean"
+
+------------------------------------------------------------------
+7. FIRST-TIME GITHUB REPO SETUP
+------------------------------------------------------------------
+# Create an empty repo on GitHub first (via github.com or `gh repo create`),
+# then:
+git add .
+git commit -m "Phase 0: foundation & walking skeleton"
+git remote add origin https://github.com/<your-github-username>/career-copilot.git
+git branch -M main
+git push -u origin main
+
+# Update .do/app.yaml: replace "your-github-username/career-copilot" in
+# both the `services.github.repo` and `static_sites.github.repo` fields
+# with your actual GitHub "owner/repo" before deploying.
+
+------------------------------------------------------------------
+8. GITHUB ACTIONS CI
+------------------------------------------------------------------
+# Nothing to run manually — .github/workflows/ci.yml triggers automatically
+# on every push to main. Watch it at:
+#   https://github.com/<your-github-username>/career-copilot/actions
+
+------------------------------------------------------------------
+9. DIGITALOCEAN DEPLOY (first time)
+------------------------------------------------------------------
+# Install doctl (DigitalOcean CLI) once:
+brew install doctl
+doctl auth init          # paste a DO API token when prompted
+
+# Create the app from the in-repo spec (after step 7's push, and after
+# editing .do/app.yaml's repo fields):
+doctl apps create --spec .do/app.yaml
+
+# In the DigitalOcean dashboard (or via `doctl apps update <app-id> --spec .do/app.yaml`
+# after editing), set the encrypted app-level secrets (these are declared
+# as SECRET-type envs in app.yaml, so DO will prompt you to fill them in
+# the dashboard the first time):
+#   SPRING_DATASOURCE_URL       (from the attached Managed Postgres resource)
+#   SPRING_DATASOURCE_USERNAME
+#   SPRING_DATASOURCE_PASSWORD
+#   JWT_SECRET                  (generate a real one, NOT the dev/test value)
+#     -> openssl rand -base64 48
+
+# Get the app ID and watch deploy status:
+doctl apps list
+doctl apps get <app-id>
+
+------------------------------------------------------------------
+10. SUBSEQUENT DEPLOYS
+------------------------------------------------------------------
+git add .
+git commit -m "<describe the change>"
+git push origin main
+# GitHub Actions runs compile/test/spotless (backend) + npm build (frontend).
+# On green CI, DigitalOcean auto-deploys (deploy_on_push: true in app.yaml).
+
+------------------------------------------------------------------
+11. PRODUCTION SMOKE TEST (after each deploy)
+------------------------------------------------------------------
+curl https://<your-do-app-domain>/actuator/health
+# -> {"status":"UP"}
+
+curl -X POST https://<your-do-app-domain>/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"smoketest@example.com","password":"password123"}'
+
+curl -X POST https://<your-do-app-domain>/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"smoketest@example.com","password":"password123"}'
+
+------------------------------------------------------------------
+12. NAMECHEAP DOMAIN (optional, once DO app is live)
+------------------------------------------------------------------
+# In Namecheap DNS settings, add a CNAME (or ALIAS for apex domain)
+# pointing your domain/subdomain at the DO app's default *.ondigitalocean.app
+# hostname (shown in the DO dashboard / `doctl apps get <app-id>`).
+# Then in DigitalOcean App Platform dashboard: Settings -> Domains -> add
+# your custom domain, and wait for DNS propagation + managed TLS cert.

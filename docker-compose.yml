@@ -1,0 +1,14 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: careercopilot
+      POSTGRES_USER: careercopilot
+      POSTGRES_PASSWORD: careercopilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - careercopilot_db_data:/var/lib/postgresql/data
+
+volumes:
+  careercopilot_db_data:
