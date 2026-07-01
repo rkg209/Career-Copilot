@@ -22,3 +22,21 @@ management:
 jwt:
   secret: ${JWT_SECRET}
   expiry-seconds: ${JWT_EXPIRY_SECONDS:86400}
+
+cors:
+  allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+jobs:
+  ingestion:
+    cron: ${JOBS_INGESTION_CRON:0 0 */6 * * *}
+  adapters:
+    enabled: ${JOBS_ADAPTERS_ENABLED:REMOTEOK}
+  remoteok:
+    base-url: ${REMOTEOK_BASE_URL:https://remoteok.com}
+  adzuna:
+    base-url: ${ADZUNA_BASE_URL:https://api.adzuna.com}
+    app-id: ${ADZUNA_APP_ID:}
+    app-key: ${ADZUNA_APP_KEY:}
+    country: ${ADZUNA_COUNTRY:us}
+    results-per-page: ${ADZUNA_RESULTS_PER_PAGE:50}
+    currency: ${ADZUNA_CURRENCY:USD}

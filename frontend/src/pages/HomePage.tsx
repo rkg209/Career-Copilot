@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { me } from "../api";
 
 export function HomePage() {
@@ -23,5 +23,12 @@ export function HomePage() {
     return <Navigate to="/login" replace />;
   }
 
-  return <div>{email ? <p>Logged in as {email}</p> : <p>Loading…</p>}</div>;
+  return (
+    <div>
+      {email ? <p>Logged in as {email}</p> : <p>Loading…</p>}
+      <nav>
+        <Link to="/jobs">Browse jobs</Link> · <Link to="/jobs/paste">Paste a job</Link>
+      </nav>
+    </div>
+  );
 }

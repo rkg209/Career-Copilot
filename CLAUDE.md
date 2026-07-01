@@ -10,8 +10,16 @@
 
 ## Current Phase
 
-**Phase 0 — Foundation & Walking Skeleton**
-Spring Boot skeleton, Postgres+pgvector up, JWT auth, React shell, CI pipeline, first deploy.
+**Phase 2 — Candidate Profile & Experience Corpus** (next)
+Structured master profile + free-text experience entries embedded into pgvector (private per user).
+
+**Done:**
+- **Phase 0 — Foundation & Walking Skeleton** — Spring Boot skeleton, Postgres+pgvector, JWT auth, React shell, CI, first deploy.
+- **Phase 1 — Job Ingestion / Portal** — pluggable `JobSourceAdapter` (RemoteOK live, Adzuna built/disabled, manual paste), normalized `job_postings`, public browse/search, React portal. Code complete, 39/39 tests green. **Deploy checkpoint 1 (DigitalOcean redeploy) still pending.**
+
+> Enum convention (set in Phase 1): native Postgres `CREATE TYPE ... AS ENUM` mapped with Hibernate
+> `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`. Note: `users.id` is `UUID` (deployed in Phase 0), so all
+> `user_id` FKs in later phases are `UUID` (planning schema modelled it as `BIGSERIAL` — reconciled to UUID).
 
 ---
 
@@ -142,3 +150,7 @@ A phase is done when:
 - [ ] `/review` passes all checklist items
 - [ ] CLAUDE.md updated with new current phase
 - [ ] Deployed to DigitalOcean and smoke-tested
+
+## Git commit policy
+- Never add a `Co-Authored-By: Claude` (or any Anthropic-related) trailer to commit
+  messages. Commit messages should list only human authors.

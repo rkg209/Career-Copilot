@@ -9,3 +9,11 @@ spring:
 jwt:
   secret: test-jwt-signing-secret-not-for-production-use-only-32bytes-min
   expiry-seconds: 86400
+
+# Scheduled ingestion cron is 6-hourly and never fires within a test run; the ingestion integration
+# test drives a stub adapter directly. Disable any live source by default here as defence-in-depth.
+jobs:
+  adapters:
+    enabled: MANUAL_PASTE
+  ingestion:
+    cron: "0 0 5 31 2 ?"
