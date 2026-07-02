@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getJob, type JobPosting } from "../api";
+import {
+  getJob,
+  listResumes,
+  scoreResume,
+  type AtsGapReport,
+  type JobPosting,
+  type ResumeVersion,
+} from "../api";
+import { GapReport } from "../components/GapReport";
 
 export function JobDetailPage() {
   const { id } = useParams();
+  const token = localStorage.getItem("token");
   const [job, setJob] = useState<JobPosting | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [latestResume, setLatestResume] = useState<ResumeVersion | null>(null);
+  const [report, setReport] = useState<AtsGapReport | null>(null);
+  const [scoring, setScoring] = useState(false);
+  const [scoreError, setScoreError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -13,6 +26,26 @@ export function JobDetailPage() {
       .then(setJob)
       .catch(() => setError("Job not found"));
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !token) return;
+    listResumes(token)
+      .then((page) => {
+        const forJob = page.content.filter((r) => String(r.jobPostingId) === id);
+        setLatestResume(forJob[0] ?? null);
+      })
+      .catch(() => setLatestResume(null));
+  }, [id, token]);
+
+  const score = () => {
+    if (!latestResume || !token) return;
+    setScoreError(null);
+    setScoring(true);
+    scoreResume(latestResume.resumeVersionId, latestResume.jobPostingId, token)
+      .then(setReport)
+      .catch(() => setScoreError("Scoring failed — try again in a moment."))
+      .finally(() => setScoring(false));
+  };
 
   if (error) {
     return (
@@ -46,8 +79,15 @@ export function JobDetailPage() {
       <p>
         <Link to={`/jobs/${job.id}/tailor`}>
           <button>Tailor resume for this job</button>
-        </Link>
+        </Link>{" "}
+        {latestResume && (
+          <button disabled={scoring} onClick={score}>
+            {scoring ? "Scoring…" : "ATS-score my latest resume"}
+          </button>
+        )}
       </p>
+      {scoreError && <p role="alert">{scoreError}</p>}
+      {report && <GapReport report={report} />}
       {job.employmentType && <p>Type: {job.employmentType}</p>}
       {salary && <p>Salary: {salary}</p>}
       {job.skills.length > 0 && <p>Skills: {job.skills.join(", ")}</p>}

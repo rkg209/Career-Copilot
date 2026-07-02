@@ -5,13 +5,18 @@
 | Field | Value |
 |---|---|
 | Phase | 4 — ATS Gap Scorer |
-| Status | DRAFT |
-| Version | 1.0 |
+| Status | IMPLEMENTED |
+| Version | 1.1 |
 | Author | Rahul |
 | Last Updated | 2026-07-02 |
 
-> **Schema reconciliation note:** New table uses `BIGSERIAL` PK; `user_id` FK is `UUID`. Confirm
-> before APPROVED.
+> **Schema reconciliation (resolved v1.1):** New table uses `BIGSERIAL` PK; `user_id` FK is `UUID`
+> (project convention since Phase 0, matches `resume_versions`). Migration is **V12** (V10/V11 were
+> consumed by Phase 3). Score shape is a composite 0–100 with a deterministic breakdown (decision
+> recorded 2026-07-02): `score = (requiredCoverage×0.6 + preferredCoverage×0.25 + keywordDensity×0.15) × 100`,
+> where `keywordDensity` = fraction of all extracted JD keywords (required ∪ preferred, deduped after
+> normalization) present in the resume. Keyword extraction is an LLM `EXTRACTION`-tier task; all
+> scoring math is deterministic.
 
 ---
 
@@ -54,7 +59,7 @@ fixes. The scorer is validated against a hand-labeled ~20-JD set — the project
 | ID | Requirement |
 |---|---|
 | FR-4.1 | The system extracts required and preferred skills/keywords from a JD. |
-| FR-4.2 | The system computes a coverage score (0–1) of required keywords present in the resume. |
+| FR-4.2 | The system computes a deterministic composite score (0–100) with a coverage breakdown. |
 | FR-4.3 | The report lists missing required, missing preferred, near-misses, and concrete fixes. |
 | FR-4.4 | Each score run is persisted as a retrievable snapshot linked to a resume version. |
 | FR-4.5 | A labeled 20-JD set validates the scorer; mean score delta is reported. |
@@ -69,13 +74,14 @@ fixes. The scorer is validated against a hand-labeled ~20-JD set — the project
 ### New Tables
 
 ```sql
--- V10__scoring_results.sql
+-- V12__scoring_results.sql
 CREATE TABLE scoring_results (
     id                BIGSERIAL     PRIMARY KEY,
     user_id           UUID          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     resume_version_id BIGINT        NOT NULL REFERENCES resume_versions (id) ON DELETE CASCADE,
     job_posting_id    BIGINT        NOT NULL REFERENCES job_postings (id) ON DELETE RESTRICT,
-    coverage_score    NUMERIC(5,4)  NOT NULL CHECK (coverage_score >= 0 AND coverage_score <= 1),
+    score             NUMERIC(5,2)  NOT NULL CHECK (score >= 0 AND score <= 100),
+    breakdown         JSONB         NOT NULL DEFAULT '{}',  -- {requiredCoverage, preferredCoverage, keywordDensity}
     missing_required  JSONB         NOT NULL DEFAULT '[]',
     missing_preferred JSONB         NOT NULL DEFAULT '[]',
     near_misses       JSONB         NOT NULL DEFAULT '[]',   -- [{skill, similarity, suggestedPhrase}]
@@ -91,7 +97,7 @@ CREATE INDEX idx_scoring_results_scored_at      ON scoring_results (user_id, sco
 
 | Migration | File | Description |
 |---|---|---|
-| V10 | `V10__scoring_results.sql` | `scoring_results` gap-report snapshots |
+| V12 | `V12__scoring_results.sql` | `scoring_results` gap-report snapshots |
 
 ---
 
@@ -108,7 +114,12 @@ CREATE INDEX idx_scoring_results_scored_at      ON scoring_results (user_id, sco
   "scoringResultId": 88,
   "resumeVersionId": 17,
   "jobPostingId": 42,
-  "coverageScore": 0.72,
+  "score": 72.5,
+  "breakdown": {
+    "requiredCoverage": 0.75,
+    "preferredCoverage": 0.60,
+    "keywordDensity": 0.71
+  },
   "missingRequired": ["Kubernetes", "gRPC"],
   "missingPreferred": ["Terraform"],
   "nearMisses": [
@@ -156,7 +167,10 @@ POST /scoring/score
     → KeywordExtractor.extract(jd)                 -- LLM EXTRACTION tier; injection guard; JSON validated
         → {required[], preferred[]} normalized via SkillAliasMap
     → resumeTerms = normalize(resume.json_payload skills + bullets)
-    → CoverageScorer.score(required, resumeTerms)  -- coverage = |required ∩ resume| / |required|
+    → CoverageScorer.score(required, preferred, resumeTerms)
+        -- requiredCoverage = |required ∩ resume| / |required| (analogous for preferred)
+        -- keywordDensity  = |(required ∪ preferred) ∩ resume| / |required ∪ preferred|
+        -- score = (requiredCoverage*0.6 + preferredCoverage*0.25 + keywordDensity*0.15) * 100
     → SemanticAugmenter.nearMisses(uncoveredRequired, resumeText)  -- embedding cosine ≥ threshold
     → FixGenerator.build(missingRequired, missingPreferred, nearMisses)
     → ScoringResultRepository.save(snapshot)
@@ -248,7 +262,7 @@ outputs so it is deterministic and cost-free in CI.
 
 ### Pre-deploy Checklist
 - [ ] `./mvnw test` green; `./mvnw spotless:check` clean
-- [ ] V10 migration reviewed (additive)
+- [ ] V12 migration reviewed (additive)
 - [ ] Skill alias map resource reviewed
 - [ ] Near-miss similarity threshold set in config
 - [ ] 20-JD eval harness runs green (report captured)
@@ -257,12 +271,13 @@ outputs so it is deterministic and cost-free in CI.
 
 | Variable | Description | Example |
 |---|---|---|
-| `SCORING_NEARMISS_THRESHOLD` | Cosine threshold for near-miss | `0.78` |
+| `SCORING_NEARMISS_THRESHOLD` | Cosine threshold for near-miss | `0.75` |
+| `SCORING_SEMANTIC_ENABLED` | Toggle semantic near-miss augmentation | `true` |
 | `LLM_EXTRACTION_MODEL` | Cheap extraction model id | `{model}` |
 
 ### DigitalOcean Deploy Steps
 1. Push to `main`; green CI (eval harness runs as a report step).
-2. DO auto-deploys; Flyway applies V10.
+2. DO auto-deploys; Flyway applies V12.
 3. Smoke: score a tailored resume against its JD; confirm coverage score + fixes returned and stored.
 
 ---
@@ -271,11 +286,11 @@ outputs so it is deterministic and cost-free in CI.
 
 - [ ] Spec status set to APPROVED before implementation begins
 - [ ] Score + fetch-report endpoints implemented per schemas
-- [ ] Coverage score is deterministic and reproducible; LLM only classifies JD terms
+- [ ] Composite score (0–100) + breakdown is deterministic and reproducible; LLM only classifies JD terms
 - [ ] Report includes missing required/preferred, near-misses, and ordered fixes
 - [ ] Each run persists a `scoring_results` snapshot; owner-scoped retrieval works
 - [ ] 20-JD labeled eval harness runs and reports mean coverage delta
-- [ ] V10 Flyway migration applies cleanly
+- [ ] V12 Flyway migration applies cleanly
 - [ ] Unit, integration, and guardrail tests pass (Testcontainers; LLM mocked)
 - [ ] React gap-report view renders coverage + missing + fixes
 - [ ] `/review` checklist passes

@@ -10,7 +10,7 @@
 
 ## Current Phase
 
-**Phase 4 — ATS Scoring** (next)
+**Phase 5 — Application Tracker** (next)
 
 **Done:**
 - **Phase 0 — Foundation & Walking Skeleton** — Spring Boot skeleton, Postgres+pgvector, JWT auth, React shell, CI, first deploy.
@@ -28,6 +28,17 @@
   Code complete, tests green. **Deploy pending (stacks with checkpoint 1). New env vars:
   `OPENROUTER_API_KEY`, `LLM_TAILORING_MODEL`, `LLM_EXTRACTION_MODEL`, `RETRIEVAL_TOP_K`,
   `TECTONIC_TIMEOUT_SECONDS`; Docker image + CI now install Tectonic.**
+
+- **Phase 4 — ATS Gap Scorer** — `scoring/` slice: LLM JD keyword extraction (`LlmTask.EXTRACTION`,
+  schema `jd-keyword-extraction`) + deterministic composite score 0–100
+  (`requiredCoverage×0.6 + preferredCoverage×0.25 + keywordDensity×0.15`; alias-normalized 1–3-gram
+  matching via `SkillAliasMap`, curated map in `resources/scoring/skill-aliases.yaml`); embedding-only
+  near-misses (`EmbeddingGateway`, cosine ≥ threshold); template-based fixes; `scoring_results`
+  snapshots (V12). Endpoints: `POST /api/v1/scoring/score`, `GET /api/v1/scoring/results/{resumeVersionId}`
+  (owner-scoped). 20-JD labeled eval harness (`AtsEvalHarnessTest`, deterministic, LLM-free) is the
+  headline-metric artifact. React: gap-report view + score actions on Resumes/JobDetail pages.
+  Code complete, 167/167 tests green. **Deploy pending (stacks with checkpoint 1). New env vars:
+  `SCORING_NEARMISS_THRESHOLD` (default 0.75), `SCORING_SEMANTIC_ENABLED` (default true).**
 
 > Embedding convention (set in Phase 2): all embedding calls go through `shared/EmbeddingGateway`
 > (never `EmbeddingModel` directly). Model/dimension are config-driven; `vector(768)` columns must

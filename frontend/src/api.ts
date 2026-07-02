@@ -298,6 +298,41 @@ export function generateCoverLetter(
   });
 }
 
+export interface AtsGapReport {
+  scoringResultId: number;
+  resumeVersionId: number;
+  jobPostingId: number;
+  score: number;
+  breakdown: {
+    requiredCoverage: number;
+    preferredCoverage: number;
+    keywordDensity: number;
+  };
+  missingRequired: string[];
+  missingPreferred: string[];
+  nearMisses: { skill: string; similarity: number; suggestedPhrase: string }[];
+  fixes: { skill: string; suggestedBullet: string; priority: number }[];
+  scoredAt: string;
+}
+
+export function scoreResume(
+  resumeVersionId: number,
+  jobPostingId: number,
+  token: string,
+): Promise<AtsGapReport> {
+  return request<AtsGapReport>("/api/v1/scoring/score", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify({ resumeVersionId, jobPostingId }),
+  });
+}
+
+export function getScore(resumeVersionId: number, token: string): Promise<AtsGapReport> {
+  return request<AtsGapReport>(`/api/v1/scoring/results/${resumeVersionId}`, {
+    headers: authHeader(token),
+  });
+}
+
 /** PDF endpoints return binary — bypasses the JSON `request` wrapper and triggers a download. */
 export async function downloadPdf(path: string, filename: string, token: string): Promise<void> {
   const response = await fetch(`${API_BASE}${path}`, { headers: authHeader(token) });

@@ -1,0 +1,49 @@
+# Curated alias -> canonical map for keyword normalization (Phase 4 ATS scoring).
+# Keys and values are matched AFTER base normalization (lowercase, punctuation collapsed
+# to single spaces), so write entries in that form: "node.js" appears here as "node js".
+# Both JD keywords and resume terms pass through this map, so either side of an alias
+# pair matches the other.
+js: javascript
+ts: typescript
+k8s: kubernetes
+kube: kubernetes
+ml: machine learning
+dl: deep learning
+nlp: natural language processing
+ci cd: cicd
+ci: cicd
+cd: cicd
+continuous integration: cicd
+continuous delivery: cicd
+continuous deployment: cicd
+postgres: postgresql
+node js: nodejs
+node: nodejs
+react js: react
+reactjs: react
+vue js: vue
+vuejs: vue
+next js: nextjs
+golang: go
+amazon web services: aws
+google cloud platform: google cloud
+gcp: google cloud
+ms azure: azure
+microsoft azure: azure
+tf: terraform
+gh actions: github actions
+rest api: rest
+rest apis: rest
+restful: rest
+restful apis: rest
+grpc: grpc
+microservice: microservices
+oop: object oriented programming
+tdd: test driven development
+db: database
+databases: database
+rdbms: database
+es: elasticsearch
+elastic search: elasticsearch
+k8: kubernetes
+springboot: spring boot

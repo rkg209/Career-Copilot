@@ -59,6 +59,10 @@ llm:
       max-tokens: 1200
       temperature: 0.5
 
+scoring:
+  near-miss-threshold: 0.75
+  semantic-augmentation-enabled: true
+
 tailoring:
   retrieval-top-k: 6
   tectonic:
