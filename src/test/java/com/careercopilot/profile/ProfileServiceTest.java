@@ -69,7 +69,17 @@ class ProfileServiceTest {
         service.upsertProfile(
             EMAIL,
             new ProfileDto(
-                "Backend Engineer", null, null, null, null, null, List.of("SDE"), null, null));
+                null,
+                null,
+                "Backend Engineer",
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of("SDE"),
+                null,
+                null));
 
     assertThat(saved.headline()).isEqualTo("Backend Engineer");
     assertThat(saved.targetRoles()).containsExactly("SDE");

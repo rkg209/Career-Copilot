@@ -43,6 +43,11 @@ export function JobDetailPage() {
         {job.location ? ` — ${job.location}` : ""}
         {job.remote ? " · Remote" : ""}
       </p>
+      <p>
+        <Link to={`/jobs/${job.id}/tailor`}>
+          <button>Tailor resume for this job</button>
+        </Link>
+      </p>
       {job.employmentType && <p>Type: {job.employmentType}</p>}
       {salary && <p>Salary: {salary}</p>}
       {job.skills.length > 0 && <p>Skills: {job.skills.join(", ")}</p>}

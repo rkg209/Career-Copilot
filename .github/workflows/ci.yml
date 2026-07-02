@@ -14,6 +14,16 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Install Tectonic (LaTeX renderer for render tests)
+        run: |
+          curl -fsSL https://drop-sh.fullyjustified.net | sh
+          sudo mv tectonic /usr/local/bin/tectonic
+          tectonic --version
+      - name: Cache Tectonic bundle
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Tectonic
+          key: tectonic-bundle-${{ runner.os }}
       - name: Compile
         run: ./mvnw -B compile
       - name: Test

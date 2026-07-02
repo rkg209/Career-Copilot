@@ -143,11 +143,21 @@ export function ProfilePage() {
   return (
     <div>
       <p>
-        <Link to="/jobs">← Back to jobs</Link>
+        <Link to="/jobs">← Back to jobs</Link> · <Link to="/resumes">My resumes</Link>
       </p>
       <h1>My profile</h1>
       {profile && (
         <form onSubmit={handleProfileSubmit}>
+          <input
+            placeholder="Full name (appears on your resume)"
+            value={profile.fullName ?? ""}
+            onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+          />
+          <input
+            placeholder="Phone (appears on your resume)"
+            value={profile.phone ?? ""}
+            onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+          />
           <input
             placeholder="Headline (e.g. Backend Engineer)"
             value={profile.headline ?? ""}

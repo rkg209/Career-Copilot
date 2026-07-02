@@ -1,0 +1,56 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.6in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{paracol}
+\usepackage[hidelinks]{hyperref}
+\definecolor{accent}{HTML}{2B547E}
+\pagestyle{empty}
+\setlist[itemize]{leftmargin=*, nosep, itemsep=2pt}
+\titleformat{\section}{\color{accent}\large\bfseries}{}{0em}{}
+\titlespacing{\section}{0pt}{8pt}{4pt}
+
+\begin{document}
+
+{\Huge\bfseries\color{accent} {{candidateName}}}\\[6pt]
+{{#contactInfo}}
+{{#email}}{{email}}{{/email}}{{#phone}} \textbullet{} {{phone}}{{/phone}}{{#location}} \textbullet{} {{location}}{{/location}}\\
+{{#linkedinUrl}}\href{ {{&linkedinUrl}} }{ {{linkedinUrl}} }{{/linkedinUrl}}{{#githubUrl}} \textbullet{} \href{ {{&githubUrl}} }{ {{githubUrl}} }{{/githubUrl}}
+{{/contactInfo}}
+
+\vspace{6pt}\hrule\vspace{6pt}
+
+\columnratio{0.68}
+\begin{paracol}{2}
+
+{{#summary}}
+\section{Profile}
+{{summary}}
+{{/summary}}
+
+\section{Experience}
+{{#experience}}
+\noindent\textbf{ {{title}} }\\
+\textit{ {{company}} } \hfill {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/experience}}
+
+\switchcolumn
+
+\section{Skills}
+\begin{itemize}
+{{#skills}}
+  \item {{.}}
+{{/skills}}
+\end{itemize}
+
+\end{paracol}
+
+\end{document}

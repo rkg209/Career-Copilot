@@ -7,7 +7,9 @@ spring:
     locations: classpath:db/migration
   ai:
     model:
-      chat: none
+      # A real ChatModel bean must exist so LlmGateway's ChatClient.Builder is autoconfigured,
+      # but LlmGateway is mocked in all tests — no chat call ever leaves the JVM.
+      chat: openai
       embedding: ollama
     ollama:
       base-url: http://localhost:11434
@@ -16,6 +18,9 @@ spring:
       embedding:
         options:
           model: nomic-embed-text
+    openai:
+      base-url: http://localhost:9999
+      api-key: test-key-never-used
 
 jwt:
   secret: test-jwt-signing-secret-not-for-production-use-only-32bytes-min
@@ -33,3 +38,29 @@ jobs:
     enabled: MANUAL_PASTE
   ingestion:
     cron: "0 0 5 31 2 ?"
+
+# LlmGateway is mocked in all tests; tier values only satisfy config binding.
+llm:
+  tiers:
+    EXTRACTION:
+      model: test-extraction-model
+      max-tokens: 1500
+      temperature: 0.2
+    TAILORING:
+      model: test-tailoring-model
+      max-tokens: 2500
+      temperature: 0.4
+    SCORING_AUGMENTATION:
+      model: test-extraction-model
+      max-tokens: 1500
+      temperature: 0.2
+    COVER_LETTER:
+      model: test-tailoring-model
+      max-tokens: 1200
+      temperature: 0.5
+
+tailoring:
+  retrieval-top-k: 6
+  tectonic:
+    binary: tectonic
+    timeout-seconds: 30

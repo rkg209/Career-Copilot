@@ -5,13 +5,27 @@
 | Field | Value |
 |---|---|
 | Phase | 3 — Resume Tailoring (RAG + JSON + LaTeX templates) |
-| Status | DRAFT |
-| Version | 1.0 |
+| Status | IMPLEMENTED (deploy pending) |
+| Version | 1.1 |
 | Author | Rahul |
-| Last Updated | 2026-07-01 |
+| Last Updated | 2026-07-02 |
 
-> **Schema reconciliation note:** New tables use `BIGSERIAL` PKs; `user_id` FKs are `UUID`. Confirm
-> before APPROVED.
+> **Schema reconciliation note:** New tables use `BIGSERIAL` PKs; `user_id` FKs are `UUID`. Confirmed.
+
+> **Decisions locked at approval (2026-07-02):**
+> 1. **Migration numbers**: V8 is already taken by `token_usage_log` — resume versions ship as **V9**,
+>    cover letters as **V10**.
+> 2. **PDF storage**: `pdf_bytes BYTEA` in Postgres (JSON is source of truth; re-render on demand).
+>    DigitalOcean Spaces (per `latex-resume-renderer.md` skill) rejected for now.
+> 3. **LLM provider**: OpenRouter (OpenAI-compatible) for **both dev and prod** chat; Ollama stays
+>    embeddings-only. Tiered models via `careercopilot.llm` config bound by `LlmTaskConfig`.
+> 4. **Token logging**: `LlmGateway` logs to the existing `token_usage_log` table (reuse
+>    `TokenUsageLog`, same pattern as `EmbeddingGateway`). The `llm_model`/`token_count` columns on
+>    the new tables are denormalized per-artifact metadata.
+> 5. **Canonical ResumeJsonPayload schema is the one inline in this spec** (required `sourceEntryId`
+>    per experience item for grounding), extended with optional `contactInfo`. The richer schema in
+>    `latex-resume-renderer.md` is NOT used — `education`/`certifications` have no backing data in
+>    the corpus and cannot be grounded.
 
 ---
 
@@ -71,7 +85,7 @@ pipeline. All four guardrails (PII, injection, grounding, JSON) go live here.
 ### New Tables
 
 ```sql
--- V8__resume_versions.sql
+-- V9__resume_versions.sql
 CREATE TABLE resume_versions (
     id                BIGSERIAL   PRIMARY KEY,
     user_id           UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -92,7 +106,7 @@ CREATE INDEX idx_resume_versions_render_failed  ON resume_versions (render_faile
 ```
 
 ```sql
--- V9__cover_letters.sql
+-- V10__cover_letters.sql
 CREATE TABLE cover_letters (
     id                BIGSERIAL   PRIMARY KEY,
     user_id           UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -116,8 +130,8 @@ CREATE INDEX idx_cover_letters_created_at     ON cover_letters (user_id, created
 
 | Migration | File | Description |
 |---|---|---|
-| V8 | `V8__resume_versions.sql` | `resume_versions` (JSONB payload + BYTEA pdf) |
-| V9 | `V9__cover_letters.sql` | `cover_letters` |
+| V9 | `V9__resume_versions.sql` | `resume_versions` (JSONB payload + BYTEA pdf) |
+| V10 | `V10__cover_letters.sql` | `cover_letters` |
 
 ---
 
@@ -228,7 +242,7 @@ User:   Profile: {headline, summary, links}
         Return JSON conforming to the ResumeJsonPayload schema.
 ```
 
-**Output JSON schema (ResumeJsonPayload — canonical schema lives in `.claude/skills/latex-resume-renderer.md`):**
+**Output JSON schema (ResumeJsonPayload — this inline schema is canonical; see approval decision 5):**
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -332,7 +346,7 @@ binary is unavailable — CI installs Tectonic).
 
 ### Pre-deploy Checklist
 - [ ] `./mvnw test` green; `./mvnw spotless:check` clean
-- [ ] V8 + V9 migrations reviewed (additive)
+- [ ] V9 + V10 migrations reviewed (additive)
 - [ ] Tectonic installed in the Docker image; render smoke test passes in container
 - [ ] Model tier config set (TAILORING = strong model; EXTRACTION = cheap)
 - [ ] LLM provider key + token budget alerts configured; no secrets committed
@@ -349,23 +363,23 @@ binary is unavailable — CI installs Tectonic).
 
 ### DigitalOcean Deploy Steps
 1. Push to `main`; green CI (must include Tectonic in the build/runtime image).
-2. DO auto-deploys; Flyway applies V8 + V9.
+2. DO auto-deploys; Flyway applies V9 + V10.
 3. Smoke: tailor a resume for a seeded JD as a test user; download the PDF; confirm token log row.
 
 ---
 
 ## Definition of Done
 
-- [ ] Spec status set to APPROVED before implementation begins
-- [ ] All tailoring + cover-letter endpoints implemented per schemas
-- [ ] LLM emits JSON only; PDF rendering is deterministic and LLM-free
-- [ ] All four guardrails execute inside `LlmGateway` and are individually tested
-- [ ] JSON persisted even when render fails; PDF endpoint re-renders from JSON
-- [ ] Grounding rejects invented experience (verified test); schema retry-then-502 verified
-- [ ] V8 + V9 Flyway migrations apply cleanly
-- [ ] All unit, integration, and guardrail tests pass (Testcontainers; LLM mocked)
-- [ ] React tailoring UI: template picker, tailor action, history, PDF download
-- [ ] `/review` checklist passes
-- [ ] CLAUDE.md updated to Phase 4
-- [ ] Deployed to DigitalOcean and smoke-tested
-- [ ] Spec status set to IMPLEMENTED
+- [x] Spec status set to APPROVED before implementation begins
+- [x] All tailoring + cover-letter endpoints implemented per schemas
+- [x] LLM emits JSON only; PDF rendering is deterministic and LLM-free
+- [x] All four guardrails execute inside `LlmGateway` and are individually tested
+- [x] JSON persisted even when render fails; PDF endpoint re-renders from JSON
+- [x] Grounding rejects invented experience (verified test); schema retry-then-502 verified
+- [x] V9 + V10 Flyway migrations apply cleanly (+ V11 profile contact fields)
+- [x] All unit, integration, and guardrail tests pass (134/134; Testcontainers; LLM mocked)
+- [x] React tailoring UI: template picker, tailor action, history, PDF download
+- [x] `/review` checklist passes
+- [x] CLAUDE.md updated to Phase 4
+- [ ] Deployed to DigitalOcean and smoke-tested (stacks with deploy checkpoint 1)
+- [x] Spec status set to IMPLEMENTED

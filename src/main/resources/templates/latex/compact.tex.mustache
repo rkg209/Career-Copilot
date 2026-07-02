@@ -1,0 +1,39 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\pagestyle{empty}
+\setlist[itemize]{leftmargin=*, nosep, itemsep=1pt}
+\titleformat{\section}{\normalsize\bfseries\uppercase}{}{0em}{}[\vspace{-6pt}\rule{\textwidth}{0.4pt}]
+\titlespacing{\section}{0pt}{6pt}{4pt}
+
+\begin{document}
+
+\noindent{\Large\bfseries {{candidateName}}}
+{{#contactInfo}}
+\hfill {{#email}}{{email}}{{/email}}{{#phone}} \textbullet{} {{phone}}{{/phone}}{{#location}} \textbullet{} {{location}}{{/location}}
+{{/contactInfo}}
+
+{{#summary}}
+\section{Summary}
+{{summary}}
+{{/summary}}
+
+\section{Experience}
+{{#experience}}
+\noindent\textbf{ {{title}} }, \textit{ {{company}} } \hfill {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+{{/experience}}
+
+{{#skillsJoined}}
+\section{Skills}
+{{&skillsJoined}}
+{{/skillsJoined}}
+
+\end{document}

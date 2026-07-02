@@ -10,12 +10,24 @@
 
 ## Current Phase
 
-**Phase 3 — Resume Tailoring** (next)
+**Phase 4 — ATS Scoring** (next)
 
 **Done:**
 - **Phase 0 — Foundation & Walking Skeleton** — Spring Boot skeleton, Postgres+pgvector, JWT auth, React shell, CI, first deploy.
 - **Phase 1 — Job Ingestion / Portal** — pluggable `JobSourceAdapter` (RemoteOK live, Adzuna built/disabled, manual paste), normalized `job_postings`, public browse/search, React portal. Code complete. **Deploy checkpoint 1 (DigitalOcean redeploy) still pending.**
 - **Phase 2 — Candidate Profile & Experience Corpus** — `candidate_profiles` + `experience_entries` (V6–V8), owner-scoped profile/experience CRUD, async embedding via `EmbeddingGateway` (Ollama `nomic-embed-text`, 768-dim, PII-redacted, token-logged), hash-based re-embed detection, `findTopKByVector` retrieval primitive, React profile page. Code complete, 81/81 tests green. **Deploy pending (ships with checkpoint 1). Prod embeddings stay PENDING until `OLLAMA_BASE_URL` is live; retry sweep picks them up.**
+
+- **Phase 3 — Resume Tailoring** — `LlmGateway` (OpenRouter via Spring AI OpenAI starter, tiered
+  `llm.tiers` config, token-logged) + four guardrails in `shared/guardrail/` (injection sanitize-and-fence,
+  PII redaction, JSON-schema validate with retry-once→502, `sourceEntryId` grounding→422);
+  RAG tailor pipeline (`tailoring/`): embed JD → `findTopKByVector` → JSON-only LLM → persist
+  (`resume_versions`/`cover_letters`, V9–V10) → deterministic JMustache+Tectonic render (4 resume
+  templates + 1 cover, `TemplateRegistry`); V11 adds `full_name`/`phone` to profiles (contactInfo is
+  injected into resume JSON after the LLM call — PII never round-trips through the provider).
+  React: template picker, tailor/cover-letter actions, resume history, blob PDF download.
+  Code complete, tests green. **Deploy pending (stacks with checkpoint 1). New env vars:
+  `OPENROUTER_API_KEY`, `LLM_TAILORING_MODEL`, `LLM_EXTRACTION_MODEL`, `RETRIEVAL_TOP_K`,
+  `TECTONIC_TIMEOUT_SECONDS`; Docker image + CI now install Tectonic.**
 
 > Embedding convention (set in Phase 2): all embedding calls go through `shared/EmbeddingGateway`
 > (never `EmbeddingModel` directly). Model/dimension are config-driven; `vector(768)` columns must

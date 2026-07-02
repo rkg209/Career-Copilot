@@ -1,0 +1,42 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\pagestyle{empty}
+\setlist[itemize]{leftmargin=*, nosep, itemsep=3pt}
+\titleformat{\section}{\large\scshape}{}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{12pt}{6pt}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\scshape {{candidateName}}}\\[4pt]
+  {{#contactInfo}}
+  {{#email}}{{email}}{{/email}}{{#phone}} \quad {{phone}}{{/phone}}{{#location}} \quad {{location}}{{/location}}
+  {{/contactInfo}}
+\end{center}
+
+{{#summary}}
+\section{Research Interests \& Summary}
+{{summary}}
+{{/summary}}
+
+\section{Appointments \& Experience}
+{{#experience}}
+\noindent {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}} \quad \textbf{ {{title}} }, {{company}}{{#location}}, {{location}}{{/location}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/experience}}
+
+{{#skillsJoined}}
+\section{Technical Skills}
+{{&skillsJoined}}
+{{/skillsJoined}}
+
+\end{document}

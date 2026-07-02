@@ -1,4 +1,4 @@
-package com.careercopilot.jobs.dto;
+package com.careercopilot.shared;
 
 import java.util.List;
 import org.springframework.data.domain.Page;

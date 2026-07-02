@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\pagestyle{empty}
+\setlist[itemize]{leftmargin=*, nosep, itemsep=2pt}
+\titleformat{\section}{\large\bfseries\uppercase}{}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{10pt}{6pt}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries {{candidateName}}}\\[4pt]
+  {{#contactInfo}}
+  {{#email}}{{email}}{{/email}}{{#phone}} \textbullet{} {{phone}}{{/phone}}{{#location}} \textbullet{} {{location}}{{/location}}\\
+  {{#linkedinUrl}}\href{ {{&linkedinUrl}} }{ {{linkedinUrl}} }{{/linkedinUrl}}{{#githubUrl}} \textbullet{} \href{ {{&githubUrl}} }{ {{githubUrl}} }{{/githubUrl}}{{#portfolioUrl}} \textbullet{} \href{ {{&portfolioUrl}} }{ {{portfolioUrl}} }{{/portfolioUrl}}
+  {{/contactInfo}}
+\end{center}
+
+{{#summary}}
+\section{Summary}
+{{summary}}
+{{/summary}}
+
+\section{Experience}
+{{#experience}}
+\noindent\textbf{ {{title}} } \hfill {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}\\
+\textit{ {{company}} }{{#location}} \hfill {{location}}{{/location}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/experience}}
+
+{{#skillsJoined}}
+\section{Skills}
+{{&skillsJoined}}
+{{/skillsJoined}}
+
+\end{document}

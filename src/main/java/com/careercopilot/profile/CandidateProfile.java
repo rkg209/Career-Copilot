@@ -26,6 +26,11 @@ public class CandidateProfile {
   @Column(name = "user_id", nullable = false, unique = true)
   private UUID userId;
 
+  @Column(name = "full_name")
+  private String fullName;
+
+  private String phone;
+
   private String headline;
 
   private String summary;
@@ -72,6 +77,22 @@ public class CandidateProfile {
 
   public UUID getUserId() {
     return userId;
+  }
+
+  public String getFullName() {
+    return fullName;
+  }
+
+  public void setFullName(String fullName) {
+    this.fullName = fullName;
+  }
+
+  public String getPhone() {
+    return phone;
+  }
+
+  public void setPhone(String phone) {
+    this.phone = phone;
   }
 
   public String getHeadline() {

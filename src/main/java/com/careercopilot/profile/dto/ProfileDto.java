@@ -4,6 +4,8 @@ import java.util.List;
 
 /** Request and response shape for GET/PUT /api/v1/profile. */
 public record ProfileDto(
+    String fullName,
+    String phone,
     String headline,
     String summary,
     String location,

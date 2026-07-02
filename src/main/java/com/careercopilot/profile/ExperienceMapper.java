@@ -27,6 +27,8 @@ final class ExperienceMapper {
 
   static ProfileDto toDto(CandidateProfile profile) {
     return new ProfileDto(
+        profile.getFullName(),
+        profile.getPhone(),
         profile.getHeadline(),
         profile.getSummary(),
         profile.getLocation(),
@@ -39,6 +41,7 @@ final class ExperienceMapper {
   }
 
   static ProfileDto emptyProfile() {
-    return new ProfileDto(null, null, null, null, null, null, List.of(), List.of(), true);
+    return new ProfileDto(
+        null, null, null, null, null, null, null, null, List.of(), List.of(), true);
   }
 }

@@ -48,6 +48,8 @@ public class ProfileService {
     UUID userId = resolveUserId(email);
     CandidateProfile profile =
         profileRepository.findByUserId(userId).orElseGet(() -> new CandidateProfile(userId));
+    profile.setFullName(dto.fullName());
+    profile.setPhone(dto.phone());
     profile.setHeadline(dto.headline());
     profile.setSummary(dto.summary());
     profile.setLocation(dto.location());

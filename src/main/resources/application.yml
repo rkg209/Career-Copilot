@@ -14,7 +14,7 @@ spring:
     locations: classpath:db/migration
   ai:
     model:
-      chat: none
+      chat: openai
       embedding: ollama
     ollama:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
@@ -23,6 +23,10 @@ spring:
       embedding:
         options:
           model: ${EMBEDDING_MODEL:nomic-embed-text}
+    openai:
+      # OpenRouter is OpenAI-compatible; used for chat in both dev and prod.
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
+      api-key: ${OPENROUTER_API_KEY:}
 
 management:
   endpoints:
@@ -40,6 +44,31 @@ cors:
 embedding:
   dimension: ${EMBEDDING_DIMENSION:768}
   retry-cron: ${EMBEDDING_RETRY_CRON:0 */10 * * * *}
+
+llm:
+  tiers:
+    EXTRACTION:
+      model: ${LLM_EXTRACTION_MODEL:meta-llama/llama-3.1-8b-instruct}
+      max-tokens: 1500
+      temperature: 0.2
+    TAILORING:
+      model: ${LLM_TAILORING_MODEL:anthropic/claude-sonnet-4.5}
+      max-tokens: 2500
+      temperature: 0.4
+    SCORING_AUGMENTATION:
+      model: ${LLM_EXTRACTION_MODEL:meta-llama/llama-3.1-8b-instruct}
+      max-tokens: 1500
+      temperature: 0.2
+    COVER_LETTER:
+      model: ${LLM_TAILORING_MODEL:anthropic/claude-sonnet-4.5}
+      max-tokens: 1200
+      temperature: 0.5
+
+tailoring:
+  retrieval-top-k: ${RETRIEVAL_TOP_K:6}
+  tectonic:
+    binary: ${TECTONIC_BINARY:tectonic}
+    timeout-seconds: ${TECTONIC_TIMEOUT_SECONDS:30}
 
 jobs:
   ingestion:
