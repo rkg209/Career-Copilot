@@ -32,7 +32,8 @@ public class SkillAliasMap {
       return raw.entrySet().stream()
           .collect(
               java.util.stream.Collectors.toUnmodifiableMap(
-                  e -> baseNormalize(e.getKey()), e -> baseNormalize(String.valueOf(e.getValue()))));
+                  e -> baseNormalize(e.getKey()),
+                  e -> baseNormalize(String.valueOf(e.getValue()))));
     } catch (IOException e) {
       throw new IllegalStateException("Failed to load skill alias map from " + RESOURCE, e);
     }

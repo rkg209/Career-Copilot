@@ -63,7 +63,11 @@ public class CoverageScorer {
     score = Math.round(score * 100.0) / 100.0;
 
     return new CoverageResult(
-        requiredCoverage, preferredCoverage, keywordDensity, score, missingRequired,
+        requiredCoverage,
+        preferredCoverage,
+        keywordDensity,
+        score,
+        missingRequired,
         missingPreferred);
   }
 

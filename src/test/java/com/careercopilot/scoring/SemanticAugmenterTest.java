@@ -59,16 +59,14 @@ class SemanticAugmenterTest {
     // cos(45°) ≈ 0.7071 < 0.75
     when(embeddingGateway.embed(eq(userId), any(), eq("Kubernetes"))).thenReturn(vector(1, 1));
 
-    assertThat(augmenter.findNearMisses(userId, List.of("Kubernetes"), List.of("chunk")))
-        .isEmpty();
+    assertThat(augmenter.findNearMisses(userId, List.of("Kubernetes"), List.of("chunk"))).isEmpty();
   }
 
   @Test
   void findNearMisses_disabledSkipsEmbeddingEntirely() {
     SemanticAugmenter augmenter = new SemanticAugmenter(embeddingGateway, false, 0.75);
 
-    assertThat(augmenter.findNearMisses(userId, List.of("Kubernetes"), List.of("chunk")))
-        .isEmpty();
+    assertThat(augmenter.findNearMisses(userId, List.of("Kubernetes"), List.of("chunk"))).isEmpty();
     verifyNoInteractions(embeddingGateway);
   }
 

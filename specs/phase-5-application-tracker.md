@@ -5,13 +5,15 @@
 | Field | Value |
 |---|---|
 | Phase | 5 — Application & Interview Tracker |
-| Status | DRAFT |
-| Version | 1.0 |
+| Status | IMPLEMENTED |
+| Version | 1.1 |
 | Author | Rahul |
-| Last Updated | 2026-07-02 |
+| Last Updated | 2026-07-05 |
 
-> **Schema reconciliation note:** New tables use `BIGSERIAL` PKs; `user_id` FKs are `UUID`. Confirm
-> before APPROVED.
+> **Reconciliation note (resolved 2026-07-05):** Migration numbers bumped `V11`/`V12` → `V13`/`V14` —
+> `V11__profile_contact_fields.sql` and `V12__scoring_results.sql` were already taken by Phase 3/4.
+> `BIGSERIAL` PK + `UUID user_id` FK confirmed against `resume_versions`, `candidate_profiles`, and
+> `scoring_results` — matches the established convention, no change needed.
 
 ---
 
@@ -65,7 +67,7 @@ this data later. Outcome: nothing about a job search is lost; rejections become 
 ### New Tables
 
 ```sql
--- V11__applications.sql
+-- V13__applications.sql
 CREATE TYPE application_status AS ENUM (
     'SAVED','APPLIED','PHONE_SCREEN','TECHNICAL_INTERVIEW','FINAL_ROUND','OFFER','REJECTED','WITHDRAWN'
 );
@@ -92,7 +94,7 @@ CREATE INDEX idx_applications_applied_at     ON applications (user_id, applied_a
 ```
 
 ```sql
--- V12__interview_logs.sql
+-- V14__interview_logs.sql
 CREATE TYPE interview_round_type AS ENUM (
     'PHONE_SCREEN','TECHNICAL','SYSTEM_DESIGN','BEHAVIOURAL','TAKE_HOME','PANEL','HR','OTHER'
 );
@@ -126,8 +128,8 @@ CREATE INDEX idx_interview_logs_contributed_at ON interview_logs (contributed_at
 
 | Migration | File | Description |
 |---|---|---|
-| V11 | `V11__applications.sql` | `application_status` enum + `applications` table |
-| V12 | `V12__interview_logs.sql` | round/contribution enums + `interview_logs` table |
+| V13 | `V13__applications.sql` | `application_status` enum + `applications` table |
+| V14 | `V14__interview_logs.sql` | round/contribution enums + `interview_logs` table |
 
 ### Status State Machine
 
@@ -271,7 +273,7 @@ N/A (no LLM tasks this phase).
 
 ### Pre-deploy Checklist
 - [ ] `./mvnw test` green; `./mvnw spotless:check` clean
-- [ ] V11 + V12 migrations reviewed (additive; enums created)
+- [ ] V13 + V14 migrations reviewed (additive; enums created)
 - [ ] State-machine transition table reviewed
 - [ ] No secrets committed
 
@@ -281,7 +283,7 @@ None new for this phase.
 
 ### DigitalOcean Deploy Steps
 1. Push to `main`; green CI.
-2. DO auto-deploys; Flyway applies V11 + V12.
+2. DO auto-deploys; Flyway applies V13 + V14.
 3. Smoke: create an application from a job, advance its status, add an interview log, list them back.
 
 ---

@@ -358,3 +358,149 @@ export function downloadResumePdf(id: number, token: string): Promise<void> {
 export function downloadCoverLetterPdf(id: number, token: string): Promise<void> {
   return downloadPdf(`/api/v1/tailoring/cover-letters/${id}/pdf`, `cover-letter-${id}.pdf`, token);
 }
+
+export type ApplicationStatus =
+  | "SAVED"
+  | "APPLIED"
+  | "PHONE_SCREEN"
+  | "TECHNICAL_INTERVIEW"
+  | "FINAL_ROUND"
+  | "OFFER"
+  | "REJECTED"
+  | "WITHDRAWN";
+
+export interface Application {
+  id: number;
+  jobPostingId: number | null;
+  jobTitleSnapshot: string;
+  companySnapshot: string;
+  resumeVersionId: number | null;
+  coverLetterId: number | null;
+  status: ApplicationStatus;
+  appliedAt: string | null;
+  notes: string | null;
+  sourceUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApplicationRequest {
+  jobPostingId?: number | null;
+  jobTitleSnapshot?: string | null;
+  companySnapshot?: string | null;
+  resumeVersionId?: number | null;
+  coverLetterId?: number | null;
+  status?: ApplicationStatus | null;
+  appliedAt?: string | null;
+  notes?: string | null;
+  sourceUrl?: string | null;
+}
+
+export type InterviewRoundType =
+  | "PHONE_SCREEN"
+  | "TECHNICAL"
+  | "SYSTEM_DESIGN"
+  | "BEHAVIOURAL"
+  | "TAKE_HOME"
+  | "PANEL"
+  | "HR"
+  | "OTHER";
+
+export interface InterviewLog {
+  id: number;
+  applicationId: number;
+  roundType: InterviewRoundType;
+  roundNumber: number;
+  interviewDate: string | null;
+  durationMinutes: number | null;
+  interviewerRole: string | null;
+  questionsAsked: string[];
+  notes: string | null;
+  feedbackReceived: string | null;
+  outcome: string | null;
+  difficulty: number | null;
+  contributedAt: string | null;
+  contributionStatus: "STAGED" | "PUBLISHED" | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InterviewLogRequest {
+  roundType: InterviewRoundType;
+  roundNumber?: number;
+  interviewDate?: string | null;
+  durationMinutes?: number | null;
+  interviewerRole?: string | null;
+  questionsAsked?: string[];
+  notes?: string | null;
+  feedbackReceived?: string | null;
+  outcome?: string | null;
+  difficulty?: number | null;
+}
+
+export function listApplications(
+  token: string,
+  page = 0,
+  size = 20,
+  sort = "updatedAt,desc",
+): Promise<Page<Application>> {
+  return request<Page<Application>>(
+    `/api/v1/tracker/applications${queryString({ page, size, sort })}`,
+    { headers: authHeader(token) },
+  );
+}
+
+export function createApplication(
+  req: ApplicationRequest,
+  token: string,
+): Promise<Application> {
+  return request<Application>("/api/v1/tracker/applications", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function updateApplication(
+  id: number,
+  req: ApplicationRequest,
+  token: string,
+): Promise<Application> {
+  return request<Application>(`/api/v1/tracker/applications/${id}`, {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function listInterviewLogs(
+  applicationId: number,
+  token: string,
+): Promise<InterviewLog[]> {
+  return request<InterviewLog[]>(
+    `/api/v1/tracker/applications/${applicationId}/interview-logs`,
+    { headers: authHeader(token) },
+  );
+}
+
+export function addInterviewLog(
+  applicationId: number,
+  req: InterviewLogRequest,
+  token: string,
+): Promise<InterviewLog> {
+  return request<InterviewLog>(
+    `/api/v1/tracker/applications/${applicationId}/interview-logs`,
+    { method: "POST", headers: authHeader(token), body: JSON.stringify(req) },
+  );
+}
+
+export function contributeInterviewLog(
+  applicationId: number,
+  logId: number,
+  token: string,
+): Promise<{ status: string }> {
+  return request<{ status: string }>(
+    `/api/v1/tracker/applications/${applicationId}/interview-logs/${logId}/contribute`,
+    { method: "POST", headers: authHeader(token) },
+  );
+}

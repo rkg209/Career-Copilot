@@ -130,9 +130,7 @@ class ScoringIntegrationTest {
     stubExtraction();
 
     post(
-        "/api/v1/scoring/score",
-        Map.of("resumeVersionId", resumeId, "jobPostingId", jobId),
-        token);
+        "/api/v1/scoring/score", Map.of("resumeVersionId", resumeId, "jobPostingId", jobId), token);
 
     ArgumentCaptor<String> userPrompt = ArgumentCaptor.forClass(String.class);
     verify(llmGateway)

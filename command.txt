@@ -1,4 +1,5 @@
-Career Copilot — Phase 0: commands from a clean checkout to a live deploy
+Career Copilot — commands from a clean checkout to a live deploy
+(current state: Phases 0–4 implemented; 167 tests; deploy checkpoint 1 pending)
 ==========================================================================
 Run these from the repo root (/Users/rahul/Placement/Project/1_Career_Copilot)
 unless a step says otherwise. Sections are in order; later steps assume
@@ -35,6 +36,20 @@ brew install --cask docker
 #      rejects (minimum 1.40). This is already fixed in pom.xml — nothing
 #      to do here unless you regenerate the project from scratch.
 
+# Tectonic (LaTeX compiler — Phase 3 resume/cover-letter PDF rendering).
+# Render code degrades gracefully if missing (render tests skip via
+# assumeTrue), but you need it to actually get PDFs:
+brew install tectonic
+
+# Ollama (OPTIONAL — Phase 2 embeddings in dev). Not installed on this Mac
+# by convention: without it, experience entries stay embeddingStatus=PENDING
+# (expected, non-fatal) and RAG retrieval/near-miss scoring return empty.
+# To run the full embedding pipeline locally:
+#   brew install ollama
+#   ollama serve            # in its own terminal
+#   ollama pull nomic-embed-text
+# The @Scheduled retry sweep embeds pending entries once Ollama is reachable.
+
 # Point Maven at JDK 21 for every command below (spotless/tests need this
 # even if your default `java` is newer):
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
@@ -61,9 +76,25 @@ docker compose up db
 export JWT_SECRET="$(openssl rand -base64 48)"     # any string >=32 bytes works for dev
 export JWT_EXPIRY_SECONDS=86400
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+
+# LLM (Phase 3 tailoring + Phase 4 keyword extraction) — OpenRouter for
+# BOTH dev and prod. Without this, tailoring/scoring endpoints return
+# 502/LLM-unavailable; everything else still works.
+export OPENROUTER_API_KEY="<your OpenRouter key>"
+# Optional overrides (config has defaults):
+#   export LLM_TAILORING_MODEL="<openrouter model id>"   # strong tier
+#   export LLM_EXTRACTION_MODEL="<openrouter model id>"  # cheap tier
+#   export RETRIEVAL_TOP_K=8
+#   export TECTONIC_TIMEOUT_SECONDS=30
+#   export SCORING_NEARMISS_THRESHOLD=0.75
+#   export SCORING_SEMANTIC_ENABLED=true
+#   export OLLAMA_BASE_URL=http://localhost:11434   # only if running Ollama (embeddings)
+
 ./mvnw spring-boot:run
 # Backend now listening on http://localhost:8080
-# Flyway applies V1__initial_schema.sql and V2__enable_pgvector.sql automatically on startup.
+# Flyway applies all migrations V1–V12 automatically on startup
+# (auth, pgvector, job sources, profiles/experience/embeddings,
+#  resume_versions, cover_letters, contact fields, scoring_results).
 
 # Smoke test in a third terminal:
 curl http://localhost:8080/actuator/health
@@ -81,6 +112,49 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 curl http://localhost:8080/api/v1/auth/me \
   -H "Authorization: Bearer <token-from-login>"
 
+# Phase 1 — job portal (public browse; IDs are numeric):
+curl "http://localhost:8080/api/v1/jobs?page=0&size=5"
+curl "http://localhost:8080/api/v1/jobs/search?q=java"
+# Ingestion from RemoteOK/Greenhouse/Lever runs on a schedule
+# (jobs.ingestion.cron, default every 6h after startup) — there is no
+# manual ingest endpoint. To get a job in immediately, paste one:
+curl -X POST http://localhost:8080/api/v1/jobs/paste \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"title":"Backend Engineer","company":"Acme","location":"Remote","rawText":"We need a Java engineer with Spring Boot, PostgreSQL and REST API experience. Docker and CI/CD are a plus."}'
+# -> note the numeric "id" in the response (used as jobPostingId below)
+
+# Phase 2 — profile & experience (owner-scoped, token required):
+curl -X PUT http://localhost:8080/api/v1/profile \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"fullName":"Your Name","phone":"+1 555 0100","headline":"Backend Engineer","summary":"Java backend engineer."}'
+curl -X POST http://localhost:8080/api/v1/profile/experience \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"role":"Software Engineer","company":"Acme","startDate":"2024-01-01","isCurrent":true,"description":"Built REST APIs in Spring Boot on PostgreSQL.","achievements":["Cut p99 latency 40%"],"skillsUsed":["Java","Spring Boot","PostgreSQL"]}'
+# (entry stays embeddingStatus=PENDING unless Ollama is running — expected)
+
+# Phase 3 — tailor a resume (needs OPENROUTER_API_KEY + >=1 experience entry;
+# note: retrieval is vector-based, so without Ollama embeddings the pipeline
+# returns 422 insufficient-experience — full local run needs Ollama up):
+curl http://localhost:8080/api/v1/tailoring/templates -H "Authorization: Bearer <token>"
+# templates: classic-ats | modern-twocol | compact | academic (+ cover-standard)
+curl -X POST http://localhost:8080/api/v1/tailoring/tailor \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"jobPostingId":<job-id>,"templateId":"classic-ats"}'
+curl http://localhost:8080/api/v1/tailoring/resumes -H "Authorization: Bearer <token>"
+curl -o resume.pdf http://localhost:8080/api/v1/tailoring/resumes/<resume-id>/pdf \
+  -H "Authorization: Bearer <token>"
+# Optional cover letter (on demand only):
+curl -X POST http://localhost:8080/api/v1/tailoring/cover-letter \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"jobPostingId":<job-id>}'
+
+# Phase 4 — ATS gap score for a resume version:
+curl -X POST http://localhost:8080/api/v1/scoring/score \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"resumeVersionId":<resume-id>,"jobPostingId":<job-id>}'
+curl http://localhost:8080/api/v1/scoring/results/<resume-id> \
+  -H "Authorization: Bearer <token>"
+
 ------------------------------------------------------------------
 3. RUN THE FRONTEND LOCALLY
 ------------------------------------------------------------------
@@ -96,8 +170,16 @@ cd ..
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 
 # Docker must be running — Testcontainers spins up a real Postgres+pgvector
-# container for AuthIntegrationTest and SecurityIntegrationTest.
+# container for the integration tests (auth, jobs, profile, tailoring, scoring).
+# Current state: 167 tests, all green. LLM is always mocked (zero API calls;
+# no OPENROUTER_API_KEY needed); Tectonic render tests self-skip if tectonic
+# isn't installed; the ATS eval harness (AtsEvalHarnessTest) runs LLM-free
+# against src/test/resources/eval/ats-labeled-set.json.
 ./mvnw test
+
+# Gotcha: src/test/resources/application.yml fully REPLACES the main one —
+# any new required @Value/config property must be mirrored there, or every
+# integration test fails at context load.
 
 # Formatting check (must pass before every commit/deploy)
 ./mvnw spotless:check
@@ -173,6 +255,19 @@ doctl apps create --spec .do/app.yaml
 #   SPRING_DATASOURCE_PASSWORD
 #   JWT_SECRET                  (generate a real one, NOT the dev/test value)
 #     -> openssl rand -base64 48
+#   OPENROUTER_API_KEY          (Phase 3/4 — tailoring + keyword extraction)
+#
+# Plus the phase 2–4 config envs (non-secret, can live in app.yaml):
+#   LLM_TAILORING_MODEL, LLM_EXTRACTION_MODEL, RETRIEVAL_TOP_K,
+#   TECTONIC_TIMEOUT_SECONDS, SCORING_NEARMISS_THRESHOLD (0.75),
+#   SCORING_SEMANTIC_ENABLED (true)
+#   OLLAMA_BASE_URL — only once an Ollama instance exists (e.g. a droplet);
+#   until then prod embeddings stay PENDING and the @Scheduled retry sweep
+#   (every 10 min) picks them up automatically when it becomes reachable.
+#
+# NOTE current state: deploy checkpoint 1 is still pending — the next
+# DigitalOcean redeploy ships Phases 1–4 together. The Dockerfile and CI
+# already install Tectonic.
 
 # Get the app ID and watch deploy status:
 doctl apps list

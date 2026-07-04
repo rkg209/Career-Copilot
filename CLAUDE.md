@@ -10,7 +10,7 @@
 
 ## Current Phase
 
-**Phase 5 — Application Tracker** (next)
+**Phase 6 — Company Interview Intel** (next)
 
 **Done:**
 - **Phase 0 — Foundation & Walking Skeleton** — Spring Boot skeleton, Postgres+pgvector, JWT auth, React shell, CI, first deploy.
@@ -39,6 +39,21 @@
   headline-metric artifact. React: gap-report view + score actions on Resumes/JobDetail pages.
   Code complete, 167/167 tests green. **Deploy pending (stacks with checkpoint 1). New env vars:
   `SCORING_NEARMISS_THRESHOLD` (default 0.75), `SCORING_SEMANTIC_ENABLED` (default true).**
+
+- **Phase 5 — Application & Interview Tracker** — `tracker/` slice: `applications` (V13) +
+  `interview_logs` (V14), pure CRUD + `ApplicationStatusMachine` (validated linear happy path
+  `SAVED→APPLIED→PHONE_SCREEN→TECHNICAL_INTERVIEW→FINAL_ROUND→OFFER`, any non-terminal status may
+  move to `REJECTED`/`WITHDRAWN`, illegal transitions → 400). Title/company snapshotted so an
+  application survives job-posting deletion; `appliedAt` auto-set on first move into `APPLIED`.
+  Endpoints: `GET/POST /api/v1/tracker/applications`, `PUT /api/v1/tracker/applications/{id}`,
+  `GET/POST /api/v1/tracker/applications/{id}/interview-logs`,
+  `POST .../interview-logs/{logId}/contribute` (Phase 5 stub: 202, Phase 6 completes the
+  anonymize-and-publish behavior). No LLM in this phase. React: kanban-by-status `ApplicationsPage`,
+  `ApplicationDetailPage` (status actions + interview-log form), "Track this application" button on
+  `JobDetailPage`. Code complete, 139 pre-existing + 34 new unit tests green; 6 new Testcontainers
+  integration tests written but **not yet executed** (no Docker in the authoring sandbox — run
+  `./mvnw test` locally before deploy). **Deploy pending (stacks with checkpoint 1). No new env
+  vars.**
 
 > Embedding convention (set in Phase 2): all embedding calls go through `shared/EmbeddingGateway`
 > (never `EmbeddingModel` directly). Model/dimension are config-driven; `vector(768)` columns must
@@ -169,6 +184,15 @@ All guardrails execute inside `LlmGateway` before/after every LLM call:
 
 ---
 
+## Progress Tracking Rule
+
+- **`progress_report.md` (repo root) is the running progress log.** Whenever any progress is made —
+  a phase implemented, a spec approved, a deploy completed, a significant decision taken, or a
+  notable issue resolved — update `progress_report.md` in the same session: adjust the snapshot
+  table, append to the relevant phase section (or add a new one), and extend the timeline table.
+  Keep it sequential and factual (what was done, decisions taken, issues resolved), matching the
+  existing format.
+
 ## Definition of Done
 
 A phase is done when:
@@ -177,6 +201,7 @@ A phase is done when:
 - [ ] All tests pass (`./mvnw test` green)
 - [ ] `/review` passes all checklist items
 - [ ] CLAUDE.md updated with new current phase
+- [ ] `progress_report.md` updated with the phase's progress, decisions, and issues
 - [ ] Deployed to DigitalOcean and smoke-tested
 
 ## Git commit policy

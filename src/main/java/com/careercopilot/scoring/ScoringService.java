@@ -141,7 +141,9 @@ public class ScoringService {
         result.getScoredAt());
   }
 
-  /** Flattens the resume JSON payload into scoreable text pieces: skills, titles, bullets, summary. */
+  /**
+   * Flattens the resume JSON payload into scoreable text pieces: skills, titles, bullets, summary.
+   */
   List<String> resumeTextPieces(ResumeVersion resume) {
     JsonNode payload;
     try {
@@ -176,8 +178,7 @@ public class ScoringService {
             .findById(resumeVersionId)
             .orElseThrow(
                 () ->
-                    new ResourceNotFoundException(
-                        "Resume version not found: " + resumeVersionId));
+                    new ResourceNotFoundException("Resume version not found: " + resumeVersionId));
     if (!version.getUserId().equals(user.getId())) {
       throw new ForbiddenException("Resume version belongs to another user");
     }

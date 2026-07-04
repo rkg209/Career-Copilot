@@ -38,7 +38,9 @@ class AtsEvalHarnessTest {
     double maxDelta = 0;
     StringBuilder report =
         new StringBuilder("\n=== ATS eval harness (labeled 20-JD set) ===\n")
-            .append(String.format("%-8s %-32s %8s %8s %7s%n", "id", "title", "labeled", "scored", "delta"));
+            .append(
+                String.format(
+                    "%-8s %-32s %8s %8s %7s%n", "id", "title", "labeled", "scored", "delta"));
 
     for (JsonNode entry : entries) {
       Map<String, String> required = keywordMap(entry.get("required"));
@@ -46,8 +48,7 @@ class AtsEvalHarnessTest {
       List<String> resumeText = new java.util.ArrayList<>();
       entry.get("resumeText").forEach(piece -> resumeText.add(piece.asText()));
 
-      double scored =
-          scorer.score(required, preferred, scorer.buildTermIndex(resumeText)).score();
+      double scored = scorer.score(required, preferred, scorer.buildTermIndex(resumeText)).score();
       double labeled = entry.get("labeledScore").asDouble();
       double delta = Math.abs(scored - labeled);
       totalDelta += delta;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
+  createApplication,
   getJob,
   listResumes,
   scoreResume,
@@ -19,6 +20,8 @@ export function JobDetailPage() {
   const [report, setReport] = useState<AtsGapReport | null>(null);
   const [scoring, setScoring] = useState(false);
   const [scoreError, setScoreError] = useState<string | null>(null);
+  const [tracked, setTracked] = useState(false);
+  const [trackError, setTrackError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -45,6 +48,14 @@ export function JobDetailPage() {
       .then(setReport)
       .catch(() => setScoreError("Scoring failed — try again in a moment."))
       .finally(() => setScoring(false));
+  };
+
+  const trackApplication = () => {
+    if (!job || !token) return;
+    setTrackError(null);
+    createApplication({ jobPostingId: job.id }, token)
+      .then(() => setTracked(true))
+      .catch(() => setTrackError("Failed to track this application — try again."));
   };
 
   if (error) {
@@ -84,8 +95,12 @@ export function JobDetailPage() {
           <button disabled={scoring} onClick={score}>
             {scoring ? "Scoring…" : "ATS-score my latest resume"}
           </button>
-        )}
+        )}{" "}
+        <button disabled={tracked} onClick={trackApplication}>
+          {tracked ? "Tracked ✓" : "Track this application"}
+        </button>
       </p>
+      {trackError && <p role="alert">{trackError}</p>}
       {scoreError && <p role="alert">{scoreError}</p>}
       {report && <GapReport report={report} />}
       {job.employmentType && <p>Type: {job.employmentType}</p>}

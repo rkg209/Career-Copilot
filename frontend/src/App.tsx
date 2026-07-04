@@ -8,6 +8,8 @@ import { PasteJobPage } from "./pages/PasteJobPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { TailorPage } from "./pages/TailorPage";
 import { ResumesPage } from "./pages/ResumesPage";
+import { ApplicationsPage } from "./pages/ApplicationsPage";
+import { ApplicationDetailPage } from "./pages/ApplicationDetailPage";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
         <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/jobs/:id/tailor" element={<TailorPage />} />
         <Route path="/resumes" element={<ResumesPage />} />
+        <Route path="/applications" element={<ApplicationsPage />} />
+        <Route path="/applications/:id" element={<ApplicationDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

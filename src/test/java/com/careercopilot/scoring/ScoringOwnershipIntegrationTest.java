@@ -85,8 +85,7 @@ class ScoringOwnershipIntegrationTest {
     Long resumeId = seedResume("owner2@example.com");
     String intruderToken = registerAndLogin("intruder2@example.com");
 
-    ResponseEntity<JsonNode> response =
-        get("/api/v1/scoring/results/" + resumeId, intruderToken);
+    ResponseEntity<JsonNode> response = get("/api/v1/scoring/results/" + resumeId, intruderToken);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
   }

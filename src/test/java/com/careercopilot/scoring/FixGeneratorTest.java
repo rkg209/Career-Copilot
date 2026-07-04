@@ -17,7 +17,8 @@ class FixGeneratorTest {
             List.of("Terraform"),
             List.of(new SemanticAugmenter.NearMiss("Kubernetes", 0.85, "container orchestration")));
 
-    assertThat(fixes).extracting(FixGenerator.Fix::skill)
+    assertThat(fixes)
+        .extracting(FixGenerator.Fix::skill)
         .containsExactly("Kubernetes", "gRPC", "Terraform");
     assertThat(fixes).extracting(FixGenerator.Fix::priority).containsExactly(1, 2, 3);
     assertThat(fixes.get(0).suggestedBullet()).contains("container orchestration");

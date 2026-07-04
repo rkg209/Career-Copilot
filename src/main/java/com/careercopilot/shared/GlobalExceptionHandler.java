@@ -6,6 +6,7 @@ import com.careercopilot.shared.guardrail.GroundingException;
 import com.careercopilot.tailoring.InsufficientExperienceException;
 import com.careercopilot.tailoring.render.RenderFailedException;
 import com.careercopilot.tailoring.render.RenderTimeoutException;
+import com.careercopilot.tracker.AlreadyContributedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,6 +40,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(BadRequestException.class)
   public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
+  }
+
+  @ExceptionHandler(AlreadyContributedException.class)
+  public ResponseEntity<ErrorResponse> handleAlreadyContributed(AlreadyContributedException e) {
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(e.getMessage()));
   }
 
   @ExceptionHandler({GroundingException.class, InsufficientExperienceException.class})
