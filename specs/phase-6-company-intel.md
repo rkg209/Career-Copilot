@@ -5,13 +5,10 @@
 | Field | Value |
 |---|---|
 | Phase | 6 — Public Company-Intel Aggregation |
-| Status | DRAFT |
-| Version | 1.0 |
+| Status | IMPLEMENTED |
+| Version | 1.1 |
 | Author | Rahul |
-| Last Updated | 2026-07-02 |
-
-> **Schema reconciliation note:** New shared table uses `BIGSERIAL` PK and — by design — has **no**
-> `user_id`/`application_id` columns. Confirm before APPROVED.
+| Last Updated | 2026-07-05 |
 
 ---
 
@@ -68,7 +65,7 @@ data never leaves the private zone; only scrubbed, pooled, aggregated intel is p
 ### New Tables
 
 ```sql
--- V13__company_interview_intel.sql
+-- V15__company_interview_intel.sql
 -- SHARED zone: no user_id, no application_id — by design. Written only by AnonymizationService.
 CREATE TABLE company_interview_intel (
     id               BIGSERIAL            PRIMARY KEY,
@@ -90,13 +87,13 @@ CREATE INDEX idx_company_intel_role      ON company_interview_intel (company, ro
 CREATE INDEX idx_company_intel_company_trgm ON company_interview_intel USING GIN (company gin_trgm_ops);
 ```
 
-`interview_round_type` and `contribution_status` enums already exist from Phase 5 (V12).
+`interview_round_type` and `contribution_status` enums already exist from Phase 5 (V14).
 
 ### Flyway Migrations Needed
 
 | Migration | File | Description |
 |---|---|---|
-| V13 | `V13__company_interview_intel.sql` | Shared anonymized intel pool + indexes |
+| V15 | `V15__company_interview_intel.sql` | Shared anonymized intel pool + indexes |
 
 ---
 

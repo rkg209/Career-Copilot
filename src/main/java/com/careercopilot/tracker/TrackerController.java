@@ -1,9 +1,10 @@
 package com.careercopilot.tracker;
 
+import com.careercopilot.intel.ContributionService;
+import com.careercopilot.intel.dto.ContributeResponse;
 import com.careercopilot.shared.PageResponse;
 import com.careercopilot.tracker.dto.ApplicationRequest;
 import com.careercopilot.tracker.dto.ApplicationResponse;
-import com.careercopilot.tracker.dto.ContributeResponse;
 import com.careercopilot.tracker.dto.InterviewLogRequest;
 import com.careercopilot.tracker.dto.InterviewLogResponse;
 import jakarta.validation.Valid;
@@ -26,11 +27,15 @@ public class TrackerController {
 
   private final ApplicationService applicationService;
   private final InterviewLogService interviewLogService;
+  private final ContributionService contributionService;
 
   public TrackerController(
-      ApplicationService applicationService, InterviewLogService interviewLogService) {
+      ApplicationService applicationService,
+      InterviewLogService interviewLogService,
+      ContributionService contributionService) {
     this.applicationService = applicationService;
     this.interviewLogService = interviewLogService;
+    this.contributionService = contributionService;
   }
 
   @GetMapping("/applications")
@@ -70,7 +75,7 @@ public class TrackerController {
   @PostMapping("/applications/{id}/interview-logs/{logId}/contribute")
   public ResponseEntity<ContributeResponse> contribute(
       @PathVariable Long id, @PathVariable Long logId, Principal principal) {
-    interviewLogService.contribute(principal.getName(), id, logId);
-    return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ContributeResponse("PENDING"));
+    ContributeResponse response = contributionService.contribute(principal.getName(), id, logId);
+    return ResponseEntity.ok(response);
   }
 }

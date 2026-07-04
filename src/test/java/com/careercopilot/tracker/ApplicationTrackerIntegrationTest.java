@@ -164,8 +164,8 @@ class ApplicationTrackerIntegrationTest {
             "/api/v1/tracker/applications/" + id + "/interview-logs/" + logId + "/contribute",
             Map.of(),
             token);
-    assertThat(first.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-    assertThat(first.getBody().get("status").asText()).isEqualTo("PENDING");
+    assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(first.getBody().get("status").asText()).isEqualTo("STAGED");
 
     ResponseEntity<JsonNode> second =
         post(

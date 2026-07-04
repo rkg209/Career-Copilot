@@ -494,13 +494,53 @@ export function addInterviewLog(
   );
 }
 
+export interface ContributeResponse {
+  status: "STAGED" | "PUBLISHED";
+  company: string;
+  publishedCountForCompany: number;
+  threshold: number;
+}
+
 export function contributeInterviewLog(
   applicationId: number,
   logId: number,
   token: string,
-): Promise<{ status: string }> {
-  return request<{ status: string }>(
+): Promise<ContributeResponse> {
+  return request<ContributeResponse>(
     `/api/v1/tracker/applications/${applicationId}/interview-logs/${logId}/contribute`,
     { method: "POST", headers: authHeader(token) },
+  );
+}
+
+export interface CompanyIntelSummary {
+  company: string;
+  roundTypes: InterviewRoundType[];
+  entryCount: number;
+  avgDifficulty: number | null;
+}
+
+export interface CompanyIntelRound {
+  roundType: InterviewRoundType;
+  roleCategory: string | null;
+  questions: string[];
+  processNotes: string | null;
+  difficulty: number | null;
+  entryCount: number;
+}
+
+export interface CompanyIntelDetail {
+  company: string;
+  rounds: CompanyIntelRound[];
+}
+
+export function browseCompanyIntel(page = 0, size = 20): Promise<Page<CompanyIntelSummary>> {
+  return request<Page<CompanyIntelSummary>>(
+    `/api/v1/intel/companies${queryString({ page, size })}`,
+  );
+}
+
+export function getCompanyIntel(companyName: string): Promise<CompanyIntelDetail> {
+  return request<CompanyIntelDetail>(
+    `/api/v1/intel/companies/${encodeURIComponent(companyName)}`,
   );
 }

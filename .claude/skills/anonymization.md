@@ -2,7 +2,11 @@
 
 ## Overview
 
-`company_interview_intel` is the only table shared across users. Before any entry is written to this table it must pass through `AnonymizationService`. This skill defines what gets stripped, how free-text is scrubbed, and when aggregated intel is surfaced to other users.
+`company_interview_intel` is the only table shared across users. Before any entry is written to
+this table it must pass through `AnonymizationService`. This skill defines what gets stripped,
+how free-text is scrubbed, and when aggregated intel is surfaced to other users. Design is
+authoritative per `specs/phase-6-company-intel.md` (single-table, flip-on-write — no separate
+`companies` table, no `company_intel_staging` table, no scheduled promotion job).
 
 ---
 
@@ -14,66 +18,61 @@ These fields are **never written** to `company_interview_intel`:
 |---|---|
 | `userId` | Direct user identifier |
 | `applicationId` | Linkable back to user's application record |
-| `userEmail` | PII |
-| `userName` | PII |
-| `applicationDate` | High-precision date narrows down identity |
-| `interviewDate` | Same reason |
-| `interviewerName` | Could identify interviewer and indirectly user |
-| `offerSalary` | Sensitive; could identify individual |
+| `userEmail` / `userName` | PII |
+| `interviewDate` | High-precision date narrows down identity |
+| `interviewerRole` | Could indirectly identify the interviewer/user if too specific |
 
-Fields that ARE written (anonymized):
-- `companyId` (foreign key to companies table — shared, public)
-- `roleLevel` (e.g., "Senior", "Staff", "L5" — general level only)
-- `interviewRound` (Phone Screen, Technical, System Design, etc.)
-- `questionText` (scrubbed — see below)
-- `questionCategory` (Algorithms, System Design, Behavioral, etc.)
-- `difficulty` (Easy / Medium / Hard)
-- `outcome` (PASSED / FAILED / NO_DECISION)
-- `notes` (scrubbed free text)
-- `createdAt` (truncated to week-of-year — not exact date)
+Fields that ARE written (anonymized), matching the `company_interview_intel` columns:
+- `company` (TEXT — normalized company name, shared/public)
+- `role_category` (normalized role family, e.g. "Software Engineer" — not a verbatim job title)
+- `round_type` (reuses the `interview_round_type` enum from V14: PHONE_SCREEN, TECHNICAL, etc.)
+- `questions` (TEXT[] — scrubbed, see below)
+- `process_notes` (scrubbed free text, from the log's `notes`/`feedback_received`)
+- `difficulty` (SMALLINT 1–5, carried through as-is — not identifying)
+- `is_published` / `staging_batch_id` / `published_at` — aggregation-gate bookkeeping, not derived
+  from user data
 
 ---
 
 ## Free-Text Scrubbing
 
-Apply `PiiRedactionService.scrub(text)` to all free-text fields before writing:
-- `questionText`
-- `notes`
-- Any other `TEXT` column
+Apply `PiiScrubber.scrub(text)` to all free-text fields before writing:
+- each entry in `questions`
+- `process_notes`
 
-`PiiRedactionService.scrub()`:
-1. Apply all PII regex patterns from `PiiRedactionAdvisor` (email, phone, SSN, address, etc.).
+`PiiScrubber.scrub()`:
+1. Apply PII regex patterns (email, phone, SSN, address, URLs) — reuse the same pattern set as
+   `shared/guardrail/PiiRedactionAdvisor` where possible.
 2. Replace proper names matching a name dictionary with `[PERSON]`.
-3. Replace company names (other than the target company) with `[COMPANY]`.
+3. Replace company names other than the target company with `[COMPANY]`.
 4. Truncate result to 2000 chars max.
+
+The `PiiScrubber` is deterministic and authoritative. An **optional** `EXTRACTION`-tier LLM assist
+(config `INTEL_LLM_ASSIST_ENABLED`, default `false`) may further paraphrase `process_notes` to
+remove residual identifiers, but it may only remove content, never add it, and contribution must
+work correctly with the assist disabled.
 
 ---
 
 ## Minimum Aggregation Threshold
 
-Intel for a company is **not surfaced to other users** until at least N anonymized entries exist for that company+role-level combination.
+Intel for a company is **not surfaced to other users** until at least N anonymized entries exist
+for that company (checked synchronously on every contribution — no batch/cron job).
 
 ```yaml
 careercopilot:
   intel:
-    min-aggregation-threshold: 3    # configurable, default 3
+    min-aggregation-threshold: 3    # configurable via INTEL_MIN_AGGREGATION, default 3
 ```
 
-### Staging table for below-threshold entries
+### Staging via `staging_batch_id`, not a separate table
 
-Entries below the threshold are written to `company_intel_staging` (same schema as `company_interview_intel` but not exposed via API). A scheduled job promotes staging entries to the live table once the threshold is met:
-
-```java
-@Scheduled(cron = "0 0 * * * *")  // hourly
-public void promoteQualifiedStagingEntries() {
-    List<CompanyRoleGroup> groups = stagingRepo.findGroupsAboveThreshold(minThreshold);
-    for (CompanyRoleGroup group : groups) {
-        List<IntelStagingEntry> entries = stagingRepo.findByCompanyAndRole(group);
-        intelRepo.saveAll(entries.stream().map(this::toLiveEntry).toList());
-        stagingRepo.deleteAll(entries);
-    }
-}
-```
+Below-threshold rows are written directly to `company_interview_intel` with
+`is_published = false` and a shared `staging_batch_id` (grouping all currently-staged rows for
+that company). There is no separate staging table. When a contribution pushes a company's
+staged+published count to ≥ threshold, `ContributionService` flips that company's staged batch in
+place: `is_published = true`, `published_at = now()`, `staging_batch_id = null`, and marks the
+corresponding source `interview_logs` rows `contribution_status = PUBLISHED`.
 
 ---
 
@@ -85,89 +84,82 @@ public void promoteQualifiedStagingEntries() {
 public class AnonymizationService {
 
     /**
-     * Convert a raw InterviewRecord (linked to a user) into an anonymous IntelEntry.
-     * Strips all user-identifying fields, scrubs free text.
-     * @throws AnonymizationException if required fields are missing or scrubbing fails
+     * Convert a private InterviewLog (+ its Application, for company/title) into an anonymized
+     * CompanyIntelEntry. Strips all user-identifying fields, scrubs free text, normalizes role.
+     * Sole writer of company_interview_intel.
      */
-    public IntelStagingEntry anonymize(InterviewRecord record);
-
-    /**
-     * Check if an entry is ready to be promoted from staging to live.
-     * Returns true if the company+roleLevel group now has >= minThreshold entries.
-     */
-    public boolean meetsAggregationThreshold(UUID companyId, String roleLevel);
+    public CompanyIntelEntry anonymize(InterviewLog log, Application application);
 }
 ```
+
+Threshold evaluation and the staged→published flip live in `ContributionService`, which calls
+`AnonymizationService.anonymize()` and then queries `CompanyIntelRepository` for the current
+staged+published count for that company.
 
 ---
 
 ## Data Flow
 
 ```
-User submits interview notes (TrackerController)
-  → TrackerService.recordInterviewOutcome(userId, interviewRecordDto)
-    → InterviewRecord saved in user's private tracker
-    → AnonymizationService.anonymize(record) → IntelStagingEntry
-    → IntelStagingRepository.save(stagingEntry)
-    → AnonymizationService.meetsAggregationThreshold(companyId, roleLevel)
-      → if true: promote to company_interview_intel immediately
-      → if false: stays in staging
+POST …/interview-logs/{logId}/contribute (TrackerController → ContributionService)
+  → load InterviewLog + Application (owner check → 403/404)
+  → if log.contributedAt != null → 409 ALREADY_CONTRIBUTED
+  → AnonymizationService.anonymize(log, application) → CompanyIntelEntry (is_published=false)
+  → CompanyIntelRepository.save(entry)
+  → mark log.contributedAt = now(), contributionStatus = STAGED
+  → count = CompanyIntelRepository.countByCompany(company)  -- staged + published
+  → if count >= threshold: flip that company's staged batch → is_published=true,
+      published_at=now(), staging_batch_id=null; flip source logs → PUBLISHED
+  → return ContributeResponse(status, company, publishedCountForCompany, threshold)
 ```
 
 ---
 
 ## Intel Query — Never Leak User Data
 
-When other users query company intel:
+Public browse reads must only ever query published rows:
 
 ```java
-// com.careercopilot.intel.IntelRepository
-// ONLY query company_interview_intel, NEVER company_intel_staging
-List<IntelEntry> findByCompanyIdAndRoleLevel(UUID companyId, String roleLevel);
+// com.careercopilot.intel.CompanyIntelRepository
+List<CompanyIntelEntry> findByCompanyAndIsPublishedTrue(String company);
 ```
 
-The API response for intel must NEVER include any field that was in the "stripped" list above. The `IntelEntryDto` must only contain:
-- `companyName`
-- `roleLevel`
-- `interviewRound`
-- `questionText` (scrubbed)
-- `questionCategory`
-- `difficulty`
-- `outcome`
-- `weekOfYear` (not exact date)
+The API response for intel (`CompanyIntelSummary`, `CompanyIntelDetail`) must NEVER include any
+field from the "stripped" list above, and must only ever be built from rows where
+`is_published = true`.
 
 ---
 
 ## Schema
 
 ```sql
--- company_interview_intel (live, shared)
+-- company_interview_intel (V15, shared, live + staged in one table)
 CREATE TABLE company_interview_intel (
-    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    company_id       UUID NOT NULL REFERENCES companies(id),
-    role_level       VARCHAR(50),
-    interview_round  VARCHAR(100),
-    question_text    TEXT,
-    question_category VARCHAR(100),
-    difficulty       VARCHAR(20),
-    outcome          VARCHAR(20),
-    notes            TEXT,
-    week_of_year     INT,            -- e.g., 202412 (YYYY + ISO week)
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-    -- NO user_id, NO application_id, NO email, NO name, NO exact date
-);
-
--- company_intel_staging (below threshold, not exposed via API)
-CREATE TABLE company_intel_staging (
-    LIKE company_interview_intel INCLUDING ALL,
-    source_company_id UUID NOT NULL   -- for threshold grouping
+    id               BIGSERIAL            PRIMARY KEY,
+    company          TEXT                 NOT NULL,
+    role_category    TEXT,
+    round_type       interview_round_type NOT NULL,
+    questions        TEXT[]               NOT NULL DEFAULT '{}',
+    process_notes    TEXT,
+    difficulty       SMALLINT             CHECK (difficulty BETWEEN 1 AND 5),
+    is_published     BOOLEAN              NOT NULL DEFAULT false,
+    staging_batch_id UUID,
+    published_at     TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ          NOT NULL DEFAULT now()
+    -- NO user_id, NO application_id, NO email, NO name, NO exact interview date
 );
 ```
+
+See `specs/phase-6-company-intel.md` for the full DDL including indexes.
 
 ---
 
 ## Testing Anonymization
 
-- `AnonymizationServiceTest`: given a `InterviewRecord` with PII fields → assert all stripped fields absent from output, free-text scrubbed.
-- `ThresholdPromotionTest`: insert N-1 staging entries → assert not promoted; insert Nth → assert promoted to live table.
-- `IntelApiIntegrationTest`: assert `GET /api/v1/intel/company/{id}` never returns userId, email, applicationId, or exact dates.
+- `PiiScrubberTest`: emails, phones, full names, URLs removed from sample notes/questions.
+- `AnonymizationServiceTest`: output entry has no user/application id; role normalized; row is
+  unpublished (staged) when below threshold.
+- `ContributionServiceTest`: Nth contribution for a company flips the staged batch to published;
+  contributing an already-contributed log returns 409.
+- `AnonymizationPiiLeakTest` / `IntelNoUserLeakTest`: a crafted log with embedded PII produces an
+  intel row/API response with none of it, under any input.

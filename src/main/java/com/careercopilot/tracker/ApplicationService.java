@@ -143,7 +143,7 @@ public class ApplicationService {
     return toResponse(application);
   }
 
-  Application ownedApplication(User user, Long id) {
+  public Application ownedApplication(User user, Long id) {
     Application application =
         applicationRepository
             .findById(id)
@@ -154,7 +154,7 @@ public class ApplicationService {
     return application;
   }
 
-  User resolveUser(String email) {
+  public User resolveUser(String email) {
     return userRepository
         .findByEmail(email)
         .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));

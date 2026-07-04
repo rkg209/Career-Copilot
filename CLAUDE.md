@@ -10,7 +10,7 @@
 
 ## Current Phase
 
-**Phase 6 — Company Interview Intel** (next)
+**Phase 7 — Mock Interview Trainer** (next)
 
 **Done:**
 - **Phase 0 — Foundation & Walking Skeleton** — Spring Boot skeleton, Postgres+pgvector, JWT auth, React shell, CI, first deploy.
@@ -54,6 +54,24 @@
   integration tests written but **not yet executed** (no Docker in the authoring sandbox — run
   `./mvnw test` locally before deploy). **Deploy pending (stacks with checkpoint 1). No new env
   vars.**
+
+- **Phase 6 — Company Interview Intel** — `intel/` slice: single shared `company_interview_intel`
+  table (V15, `TEXT company`, no `user_id`/`application_id`, `is_published`/`staging_batch_id`
+  flip-on-write — no separate `companies` or staging table, no cron job). `PiiScrubber`
+  (deterministic email/phone/URL/name scrub, reuses `shared/PiiRedactionService`) +
+  `AnonymizationService` (sole writer of the intel table) + `ContributionService` (replaces the
+  Phase 5 stub: ownership check → 409 if already contributed → anonymize+stage → publish that
+  company's staged batch once `INTEL_MIN_AGGREGATION` (default 3) is reached, flipping the source
+  `interview_logs` rows to `PUBLISHED` too). `POST .../interview-logs/{logId}/contribute` now
+  returns 200 with `{status, company, publishedCountForCompany, threshold}` (was the Phase 5 stub's
+  202/`PENDING`). Public, unauthenticated `GET /api/v1/intel/companies` and
+  `GET /api/v1/intel/companies/{companyName}` — published rows only, no user identity ever exposed
+  (enforced by a reflection-based `IntelNoUserLeakTest` guardrail). React: public `CompanyIntelPage`
+  + `CompanyIntelDetailPage` at `/intel`, updated contribute button on `ApplicationDetailPage`.
+  Code complete, 159/159 unit tests green; 3 new Testcontainers integration tests written but
+  **not yet executed** (no Docker in the authoring sandbox — run `./mvnw test` locally before
+  deploy). **Deploy pending (stacks with checkpoint 1). New env vars: `INTEL_MIN_AGGREGATION`
+  (default 3), `INTEL_LLM_ASSIST_ENABLED` (default false, reserved — no LLM assist implemented).**
 
 > Embedding convention (set in Phase 2): all embedding calls go through `shared/EmbeddingGateway`
 > (never `EmbeddingModel` directly). Model/dimension are config-driven; `vector(768)` columns must

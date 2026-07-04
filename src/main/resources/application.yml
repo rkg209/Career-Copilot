@@ -68,6 +68,11 @@ scoring:
   near-miss-threshold: ${SCORING_NEARMISS_THRESHOLD:0.75}
   semantic-augmentation-enabled: ${SCORING_SEMANTIC_ENABLED:true}
 
+careercopilot:
+  intel:
+    min-aggregation-threshold: ${INTEL_MIN_AGGREGATION:3}
+    llm-assist-enabled: ${INTEL_LLM_ASSIST_ENABLED:false}
+
 tailoring:
   retrieval-top-k: ${RETRIEVAL_TOP_K:6}
   tectonic:

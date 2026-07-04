@@ -12,4 +12,7 @@ public interface InterviewLogRepository extends JpaRepository<InterviewLog, Long
 
   Optional<InterviewLog> findByIdAndApplicationIdAndUserId(
       Long id, Long applicationId, UUID userId);
+
+  List<InterviewLog> findByApplicationIdInAndContributionStatus(
+      List<Long> applicationIds, ContributionStatus contributionStatus);
 }

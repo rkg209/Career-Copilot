@@ -1,8 +1,8 @@
 # Career Copilot — Progress Report
 
-> **As of:** 2026-07-05 · **Branch:** `main` · **Tests:** 173/173 green (139 unit verified in-session; 34 new unit tests for Phase 5; 6 new Testcontainers integration tests pending a Docker-available run) · **Current phase:** Phase 6 — Company Interview Intel (next up)
+> **As of:** 2026-07-05 · **Branch:** `main` · **Tests:** 159/159 unit tests green this session; 9 new Testcontainers integration tests (6 from Phase 5, 3 from Phase 6) written but pending a Docker-available run · **Current phase:** Phase 7 — Mock Interview Trainer (next up)
 >
-> This report tracks the project sequentially: from the planning folder and the master document (`career-copilot.md`), through the Claude Code spec-driven-development (SDD) setup, and phase by phase through Phase 4. Every stage records what was done, the decisions taken, and the issues resolved.
+> This report tracks the project sequentially: from the planning folder and the master document (`career-copilot.md`), through the Claude Code spec-driven-development (SDD) setup, and phase by phase through Phase 6. Every stage records what was done, the decisions taken, and the issues resolved.
 
 ---
 
@@ -10,11 +10,11 @@
 
 | Item | State |
 |---|---|
-| Phases complete (code + tests) | 0, 1, 2, 3, 4, 5 |
+| Phases complete (code + tests) | 0, 1, 2, 3, 4, 5, 6 |
 | Deployed to DigitalOcean | Phase 0 only (deploy checkpoint 0) |
-| **Deploy checkpoint 1** | **PENDING — now covers Phases 1–5 stacked together** |
-| Test suite | 173/173 (139 unit confirmed green this session; 34 new Phase 5 unit tests confirmed green; 6 new Testcontainers integration tests need a Docker-available run to confirm) |
-| Specs | Phases 0–5 written & implemented; Phases 6–8 specs drafted |
+| **Deploy checkpoint 1** | **PENDING — now covers Phases 1–6 stacked together** |
+| Test suite | 159/159 unit tests confirmed green this session; 9 Testcontainers integration tests (6 Phase 5, 3 Phase 6) written against the established pattern but need a Docker-available run to confirm |
+| Specs | Phases 0–6 written & implemented; Phases 7–8 specs drafted |
 | Headline metric artifact | `AtsEvalHarnessTest` + 20-JD labeled set (deterministic, LLM-free) |
 
 ---
@@ -174,19 +174,82 @@ The build environment was configured to enforce spec-driven development:
 
 ---
 
+## Phase 6 — Company Interview Intel ✅ (implemented 2026-07-05, 159/159 unit tests green)
+
+**Spec:** `specs/phase-6-company-intel.md` — DRAFT → APPROVED → IMPLEMENTED. A near-complete DRAFT
+already existed from earlier spec-authoring; it needed two corrections before approval (see
+Decisions below), not a rewrite.
+
+**Built (`intel/` slice):**
+- **`company_interview_intel`** (**V15**) — single shared table (`TEXT company`, `BIGSERIAL` id,
+  `is_published`, `staging_batch_id UUID`, `published_at`), no `user_id`/`application_id` columns
+  by design; reuses the `interview_round_type` enum from V14. GIN trigram index on `company`.
+- **`PiiScrubber`** — deterministic scrub of free text: delegates email/phone/SSN to the shared
+  `PiiRedactionService`, adds URL stripping and a Title-Case-bigram person-name heuristic (with a
+  stoplist for common technical/process bigrams like "System Design" so real content survives).
+- **`AnonymizationService`** — sole writer of the intel table; builds a `CompanyIntelEntry` from an
+  `InterviewLog` + its `Application` (for company/title), normalizes role category via keyword
+  matching, reuses (or creates) a `staging_batch_id` per company.
+- **`ContributionService`** — replaces the Phase 5 stub end-to-end: ownership check → 409 if
+  already contributed → anonymize+stage → count staged+published rows for the company → if ≥
+  threshold (`INTEL_MIN_AGGREGATION`, default 3), flip that company's staged batch to published
+  in place and flip the corresponding source `interview_logs` rows to `PUBLISHED` (found via an
+  `applications.company_snapshot` lookup, since the intel table intentionally carries no back-link
+  to the source log).
+- **`IntelController`/`IntelService`** — two public, unauthenticated endpoints:
+  `GET /api/v1/intel/companies` (paginated per-company aggregates, published rows only) and
+  `GET /api/v1/intel/companies/{companyName}` (grouped by round type, 404 if nothing published).
+  `SecurityConfig` permits `GET /api/v1/intel/**` alongside the existing public `/api/v1/jobs/**`.
+- **Tracker endpoint response change:** `POST .../interview-logs/{logId}/contribute` now returns
+  **200** with `{status, company, publishedCountForCompany, threshold}` (was `202`/`{"status":
+  "PENDING"}` in the Phase 5 stub) — a deliberate breaking change to the Phase 5 contract, since
+  the stub was explicitly documented as temporary.
+- Tests: `PiiScrubberTest`, `AnonymizationServiceTest`, `ContributionServiceTest`,
+  `IntelServiceTest` (unit, Mockito) + `AnonymizationPiiLeakTest` (crafted-PII guardrail) +
+  `IntelNoUserLeakTest` (reflection-based structural guardrail — fails if any future field named
+  like `userId`/`applicationId`/`email` is ever added to the entity or DTOs) + three Testcontainers
+  integration tests (`ContributionIntegrationTest`, `IntelBrowseIntegrationTest`,
+  `IntelPrivacyIntegrationTest`) written but not executable in this Docker-less sandbox.
+- React: `CompanyIntelPage` (public list, paginated) + `CompanyIntelDetailPage` (public, grouped by
+  round type) at `/intel` and `/intel/:companyName`; `ApplicationDetailPage`'s contribute button
+  now surfaces the STAGED/PUBLISHED outcome and per-log contribution status.
+
+**Decisions taken with the user at spec approval:**
+- **Schema design conflict resolved in favor of the spec**, not the older `.claude/skills/anonymization.md`
+  doc: single `company_interview_intel` table with in-place `is_published` flip, no separate
+  `companies` table, no `company_intel_staging` table, no hourly `@Scheduled` promotion job. The
+  skill doc was rewritten to match (class names, schema, threshold-check-is-synchronous) so it
+  no longer describes a design nobody implemented.
+- **Migration renumbering:** the DRAFT spec's own `V13` was already taken by Phase 5's
+  `applications` table — renumbered to **V15** (next free version after `V14__interview_logs.sql`).
+- `ApplicationService.ownedApplication`/`resolveUser` were widened from package-private to
+  `public` so `ContributionService` (a different feature package, `intel` vs `tracker`) could reuse
+  the existing ownership-check pattern instead of duplicating it.
+
+**Issues resolved:**
+- The `PiiScrubber`'s name-redaction heuristic (any two consecutive Title-Case words → `[PERSON]`)
+  would have false-positived on technical vocabulary like "System Design" or "Dynamic Programming"
+  — added a small stoplist so real interview content survives scrubbing.
+- Docker/Testcontainers unavailable in this sandbox (same caveat as Phase 5) — the 3 new
+  integration test classes compile and follow the established `@Testcontainers` +
+  `pgvector/pgvector:pg16` pattern but could not execute here. **Must be run locally (`./mvnw test`
+  with Docker running) before this phase's Definition of Done is fully satisfied.**
+
+---
+
 ## Cross-Phase Threads
 
-- **Migration history:** V1–V4 (Phase 0 foundation/auth) → V5 (ATS job sources) → V6–V8 (profiles, experience, embeddings) → V9–V11 (resume versions, cover letters, contact fields) → V12 (scoring results) → V13–V14 (applications, interview logs). All additive, per the deploy rule. Numbering collisions happened three times now (V5, V8, and the Phase 5 spec's stale V11/V12) and were resolved by renumbering forward each time.
+- **Migration history:** V1–V4 (Phase 0 foundation/auth) → V5 (ATS job sources) → V6–V8 (profiles, experience, embeddings) → V9–V11 (resume versions, cover letters, contact fields) → V12 (scoring results) → V13–V14 (applications, interview logs) → V15 (company interview intel). All additive, per the deploy rule. Numbering collisions happened four times now (V5, V8, the Phase 5 spec's stale V11/V12, and the Phase 6 spec's stale V13) and were resolved by renumbering forward each time.
 - **Recurring gotcha:** the test `application.yml` fully replacing main config caused failures in both Phase 3 and Phase 4 — any new required property must be mirrored there.
 - **Guardrail architecture** (built Phase 3, reused Phase 4): every LLM call passes through injection sanitization, PII redaction, JSON schema validation with retry, and (for tailoring) grounding validation.
-- **Privacy discipline:** every user-data query is owner-scoped; PII is kept out of LLM round-trips; the shared-intel anonymization layer is still ahead (Phase 6).
+- **Privacy discipline:** every user-data query is owner-scoped; PII is kept out of LLM round-trips; the shared-intel anonymization layer (Phase 6) reuses the same `PiiRedactionService` regex patterns for its own scrubbing.
 
 ## Outstanding Work / Next Steps
 
-1. **Run the full test suite with Docker available** — confirm the 6 new Phase 5 Testcontainers integration tests pass (`ApplicationTrackerIntegrationTest`, `ApplicationOwnershipIntegrationTest`, `InterviewLogIntegrationTest`); they compile and follow the established pattern but could not execute in this session's Docker-less sandbox.
-2. **Deploy checkpoint 1 (highest priority)** — one DigitalOcean redeploy now ships Phases 1–5. No new env vars for Phase 5 itself; still required from earlier phases: `OPENROUTER_API_KEY`, `LLM_TAILORING_MODEL`, `LLM_EXTRACTION_MODEL`, `RETRIEVAL_TOP_K`, `TECTONIC_TIMEOUT_SECONDS`, `SCORING_NEARMISS_THRESHOLD` (0.75), `SCORING_SEMANTIC_ENABLED` (true). Prod embeddings stay PENDING until `OLLAMA_BASE_URL` points at a live Ollama instance; the retry sweep then picks them up. Docker image and CI already install Tectonic.
+1. **Run the full test suite with Docker available** — confirm all 9 pending Testcontainers integration tests pass: Phase 5's `ApplicationTrackerIntegrationTest`, `ApplicationOwnershipIntegrationTest`, `InterviewLogIntegrationTest`, and Phase 6's `ContributionIntegrationTest`, `IntelBrowseIntegrationTest`, `IntelPrivacyIntegrationTest`. All compile and follow the established pattern but could not execute in this session's Docker-less sandbox.
+2. **Deploy checkpoint 1 (highest priority)** — one DigitalOcean redeploy now ships Phases 1–6. New env vars for Phase 6: `INTEL_MIN_AGGREGATION` (default 3), `INTEL_LLM_ASSIST_ENABLED` (default false, unused placeholder — no LLM assist implemented this phase). Still required from earlier phases: `OPENROUTER_API_KEY`, `LLM_TAILORING_MODEL`, `LLM_EXTRACTION_MODEL`, `RETRIEVAL_TOP_K`, `TECTONIC_TIMEOUT_SECONDS`, `SCORING_NEARMISS_THRESHOLD` (0.75), `SCORING_SEMANTIC_ENABLED` (true). Prod embeddings stay PENDING until `OLLAMA_BASE_URL` points at a live Ollama instance; the retry sweep then picks them up. Docker image and CI already install Tectonic.
 3. **Headline metric hardening** — replace the generated golden labels in the ATS eval set with independent hand-scored labels to make the before/after improvement number defensible.
-4. Later phases: 6 (anonymized company intel — completes the `contribute` stub from Phase 5), 7 (mock-interview trainer + SM-2), 8 (metrics, observability, OpenAPI docs, polish).
+4. Later phases: 7 (mock-interview trainer + SM-2, can now draw on the Phase 6 intel pool), 8 (metrics, observability, OpenAPI docs, polish).
 
 ## Timeline at a Glance
 
@@ -201,4 +264,5 @@ The build environment was configured to enforce spec-driven development:
 | 2026-07-02 10:36 | Phase 3 committed (resume tailoring, 134/134 tests) |
 | 2026-07-02 10:59 | Phase 4 committed (ATS gap scorer, 167/167 tests) |
 | 2026-07-05 | Phase 5 implemented (application & interview tracker, 34 new unit tests green; integration tests pending a Docker-available run) |
-| — pending — | Deploy checkpoint 1 (Phases 1–5) |
+| 2026-07-05 | Phase 6 implemented (company interview intel, 159/159 unit tests green; integration tests pending a Docker-available run) |
+| — pending — | Deploy checkpoint 1 (Phases 1–6) |

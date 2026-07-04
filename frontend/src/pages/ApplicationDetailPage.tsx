@@ -41,6 +41,7 @@ export function ApplicationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [roundType, setRoundType] = useState<InterviewRoundType>("PHONE_SCREEN");
   const [notes, setNotes] = useState("");
+  const [contributeMessage, setContributeMessage] = useState<string | null>(null);
 
   const loadApplication = () => {
     if (!token) return;
@@ -97,7 +98,14 @@ export function ApplicationDetailPage() {
   const contribute = (logId: number) => {
     if (!token) return;
     contributeInterviewLog(applicationId, logId, token)
-      .then(loadLogs)
+      .then((response) => {
+        setContributeMessage(
+          response.status === "PUBLISHED"
+            ? `Thanks! ${response.company} has reached ${response.publishedCountForCompany} contributions and its intel is now public.`
+            : `Contribution staged (${response.publishedCountForCompany}/${response.threshold} needed for ${response.company} to publish).`,
+        );
+        loadLogs();
+      })
       .catch(() => setError("Contribute failed"));
   };
 
@@ -137,6 +145,7 @@ export function ApplicationDetailPage() {
       {application.notes && <p>Notes: {application.notes}</p>}
 
       <h2>Interview logs</h2>
+      {contributeMessage && <p role="status">{contributeMessage}</p>}
       {logs.length === 0 && <p>No interview logs yet.</p>}
       <ul>
         {logs.map((log) => (
@@ -144,7 +153,7 @@ export function ApplicationDetailPage() {
             Round {log.roundNumber} — {log.roundType.replaceAll("_", " ")}
             {log.notes ? `: ${log.notes}` : ""}{" "}
             {log.contributedAt ? (
-              <em>(contributed)</em>
+              <em>({log.contributionStatus?.toLowerCase() ?? "contributed"})</em>
             ) : (
               <button onClick={() => contribute(log.id)}>Contribute anonymously</button>
             )}

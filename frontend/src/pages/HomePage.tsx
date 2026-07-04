@@ -28,7 +28,8 @@ export function HomePage() {
       {email ? <p>Logged in as {email}</p> : <p>Loading…</p>}
       <nav>
         <Link to="/jobs">Browse jobs</Link> · <Link to="/jobs/paste">Paste a job</Link> ·{" "}
-        <Link to="/applications">My applications</Link>
+        <Link to="/applications">My applications</Link> ·{" "}
+        <Link to="/intel">Company interview intel</Link>
       </nav>
     </div>
   );
