@@ -10,6 +10,8 @@ import {
   type ResumeVersion,
 } from "../api";
 import { GapReport } from "../components/GapReport";
+import { AppLayout } from "../components/AppLayout";
+import { Alert, Button, Card, Chip, PageHeader, Spinner } from "../components/ui";
 
 export function JobDetailPage() {
   const { id } = useParams();
@@ -60,15 +62,23 @@ export function JobDetailPage() {
 
   if (error) {
     return (
-      <div>
-        <p role="alert">{error}</p>
-        <Link to="/jobs">Back to jobs</Link>
-      </div>
+      <AppLayout>
+        <Alert variant="error">{error}</Alert>
+        <p className="mt-4">
+          <Link to="/jobs" className="text-accent hover:underline">
+            ← Back to jobs
+          </Link>
+        </p>
+      </AppLayout>
     );
   }
 
   if (!job) {
-    return <p>Loading…</p>;
+    return (
+      <AppLayout>
+        <Spinner />
+      </AppLayout>
+    );
   }
 
   const salary =
@@ -77,54 +87,74 @@ export function JobDetailPage() {
       : null;
 
   return (
-    <div>
-      <p>
-        <Link to="/jobs">← Back to jobs</Link>
+    <AppLayout>
+      <p className="mb-4">
+        <Link to="/jobs" className="text-sm text-accent hover:underline">
+          ← Back to jobs
+        </Link>
       </p>
-      <h1>{job.title}</h1>
-      <p>
-        <strong>{job.company}</strong>
-        {job.location ? ` — ${job.location}` : ""}
-        {job.remote ? " · Remote" : ""}
-      </p>
-      <p>
-        <Link to={`/jobs/${job.id}/tailor`}>
-          <button>Tailor resume for this job</button>
-        </Link>{" "}
-        {latestResume && (
-          <button disabled={scoring} onClick={score}>
-            {scoring ? "Scoring…" : "ATS-score my latest resume"}
-          </button>
-        )}{" "}
-        <button disabled={tracked} onClick={trackApplication}>
-          {tracked ? "Tracked ✓" : "Track this application"}
-        </button>
-      </p>
-      {trackError && <p role="alert">{trackError}</p>}
-      {scoreError && <p role="alert">{scoreError}</p>}
+
+      <PageHeader
+        title={job.title}
+        subtitle={
+          <>
+            <span className="font-medium text-fg">{job.company}</span>
+            {job.location ? ` · ${job.location}` : ""}
+            {job.remote ? " · Remote" : ""}
+          </>
+        }
+        actions={
+          <>
+            <Link to={`/jobs/${job.id}/tailor`}>
+              <Button variant="primary">Tailor resume</Button>
+            </Link>
+            {latestResume && (
+              <Button disabled={scoring} onClick={score}>
+                {scoring ? "Scoring…" : "ATS-score latest resume"}
+              </Button>
+            )}
+            <Button disabled={tracked} onClick={trackApplication}>
+              {tracked ? "Tracked ✓" : "Track this application"}
+            </Button>
+          </>
+        }
+      />
+
+      {trackError && <Alert variant="error" className="mb-3">{trackError}</Alert>}
+      {scoreError && <Alert variant="error" className="mb-3">{scoreError}</Alert>}
       {report && <GapReport report={report} />}
-      {job.employmentType && <p>Type: {job.employmentType}</p>}
-      {salary && <p>Salary: {salary}</p>}
-      {job.skills.length > 0 && <p>Skills: {job.skills.join(", ")}</p>}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {job.employmentType && <Chip>{job.employmentType.replaceAll("_", " ")}</Chip>}
+        {salary && <Chip>{salary}</Chip>}
+        {job.skills.map((s) => (
+          <Chip key={s}>{s}</Chip>
+        ))}
+      </div>
+
       {job.responsibilities.length > 0 && (
-        <>
-          <h2>Responsibilities</h2>
-          <ul>
+        <Card className="mt-6">
+          <h2 className="mb-2 text-lg font-semibold">Responsibilities</h2>
+          <ul className="list-disc space-y-1 pl-5 text-sm">
             {job.responsibilities.map((r, i) => (
               <li key={i}>{r}</li>
             ))}
           </ul>
-        </>
+        </Card>
       )}
-      <h2>Description</h2>
-      <pre style={{ whiteSpace: "pre-wrap" }}>{job.fullText}</pre>
+
+      <Card className="mt-6">
+        <h2 className="mb-2 text-lg font-semibold">Description</h2>
+        <pre className="whitespace-pre-wrap font-sans text-sm text-muted">{job.fullText}</pre>
+      </Card>
+
       {job.url && (
-        <p>
-          <a href={job.url} target="_blank" rel="noreferrer">
-            Original posting
+        <p className="mt-4">
+          <a href={job.url} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+            Original posting ↗
           </a>
         </p>
       )}
-    </div>
+    </AppLayout>
   );
 }

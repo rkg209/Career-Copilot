@@ -302,4 +302,5 @@ them with hand-scored labels is needed to make the headline before/after metric 
 | 2026-07-05 | Phase 5 implemented (application & interview tracker, 34 new unit tests green; integration tests pending a Docker-available run) |
 | 2026-07-05 | Phase 6 implemented (company interview intel, 159/159 unit tests green; integration tests pending a Docker-available run) |
 | 2026-07-05 | Full-suite audit + fixes: critical V14/V15 SMALLINT↔Integer schema bug fixed, LLM response cache added, company-snapshot trim fix. Full `./mvnw test` with Docker **242/242 green** |
+| 2026-07-05 | Frontend redesign — "Modern SaaS (dark-first)" theme: Tailwind v4 + Inter, light/dark toggle, shared `AppLayout`/`AuthLayout` shell + `components/ui/` primitives, all 13 pages + `GapReport` restyled. Design system documented in `frontend/DESIGN.md`. `npm run build`/`lint`/`tsc` green; both themes verified visually. No backend/API changes |
 | — pending — | Deploy checkpoint 1 (Phases 1–6) |

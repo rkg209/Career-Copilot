@@ -1,111 +1,206 @@
+@import "@fontsource-variable/inter";
+@import "tailwindcss";
+
+/* Dark mode is class-based: toggled by adding `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens — Career Copilot "Modern SaaS (dark-first)" theme.
+   Semantic tokens map to CSS variables so light/dark swap by toggling `.dark`.
+   Utilities generated: bg-canvas, bg-surface, bg-elevated, border-line,
+   text-fg, text-muted, text-accent, bg-accent, text-success, etc.
+   Full reference: frontend/DESIGN.md
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: "Inter Variable", system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --radius-xl: 1rem;
+  --radius-lg: 0.625rem;
+}
+
+/* Light theme (default when no `.dark` class) */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --elevated: #f1f5f9;
+  --line: #e5e7eb;
+  --fg: #0f1117;
+  --muted: #6b7280;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: rgba(124, 58, 237, 0.1);
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #e11d48;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Dark theme (default look — theme.ts applies `.dark` unless user picks light) */
+.dark {
+  --canvas: #0b0b0f;
+  --surface: #16171d;
+  --elevated: #1e1f27;
+  --line: rgba(255, 255, 255, 0.08);
+  --fg: #f3f4f6;
+  --muted: #9ca3af;
+  --accent: #a855f7;
+  --accent-hover: #9333ea;
+  --accent-soft: rgba(168, 85, 247, 0.14);
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-canvas);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    letter-spacing: 0.1px;
+  }
+
+  h1, h2, h3 {
+    color: var(--color-fg);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Themed autofill so inputs don't flash white in dark mode */
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-fg);
+    transition: background-color 9999s ease-in-out 0s;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@layer components {
+  /* Buttons — compose base + modifier: className="btn btn-primary" --------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+           text-sm font-medium transition-colors duration-150
+           disabled:cursor-not-allowed disabled:opacity-50 select-none
+           whitespace-nowrap;
+  }
+  .btn-primary {
+    @apply text-white;
+    background-color: var(--color-accent);
+  }
+  .btn-primary:not(:disabled):hover {
+    background-color: var(--color-accent-hover);
+  }
+  .btn-secondary {
+    @apply border bg-surface text-fg;
+  }
+  .btn-secondary:not(:disabled):hover {
+    background-color: var(--color-elevated);
+  }
+  .btn-ghost {
+    @apply text-muted;
+  }
+  .btn-ghost:not(:disabled):hover {
+    @apply text-fg;
+    background-color: var(--color-elevated);
+  }
+  .btn-danger {
+    @apply border text-danger;
+    border-color: var(--color-danger);
+  }
+  .btn-danger:not(:disabled):hover {
+    background-color: var(--color-accent-soft);
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  /* Form controls — className="input" / "textarea" / "select" ------------- */
+  .input {
+    @apply w-full rounded-lg border bg-surface px-3 py-2 text-sm text-fg
+           transition-colors duration-150 placeholder:text-muted
+           focus:outline-none;
   }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  .input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+  .textarea {
+    @apply w-full rounded-lg border bg-surface px-3 py-2 text-sm text-fg
+           transition-colors duration-150 placeholder:text-muted
+           focus:outline-none resize-y leading-relaxed;
   }
-}
-p {
-  margin: 0;
-}
+  .textarea:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+  .select {
+    @apply w-full rounded-lg border bg-surface px-3 py-2 pr-8 text-sm text-fg
+           transition-colors duration-150 cursor-pointer focus:outline-none;
+  }
+  .select:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+  .label {
+    @apply block text-sm font-medium text-fg mb-1.5;
+  }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+  /* Surfaces ------------------------------------------------------------- */
+  .card {
+    @apply rounded-xl border bg-surface p-5;
+  }
+  .card-glow {
+    @apply rounded-xl border bg-surface p-5;
+    box-shadow: 0 0 40px -12px var(--color-accent-soft),
+                0 1px 2px rgba(0, 0, 0, 0.06);
+  }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  /* Chips & badges ------------------------------------------------------- */
+  .chip {
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5
+           text-xs font-medium text-muted;
+    background-color: var(--color-elevated);
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5
+           text-xs font-semibold;
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
 }

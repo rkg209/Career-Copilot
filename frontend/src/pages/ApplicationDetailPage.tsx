@@ -11,6 +11,19 @@ import {
   type InterviewLog,
   type InterviewRoundType,
 } from "../api";
+import { AppLayout } from "../components/AppLayout";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  Spinner,
+  StatusBadge,
+} from "../components/ui";
 
 const NEXT_STATUS: Partial<Record<ApplicationStatus, ApplicationStatus>> = {
   SAVED: "APPLIED",
@@ -111,77 +124,110 @@ export function ApplicationDetailPage() {
 
   if (error && !application) {
     return (
-      <div>
-        <p role="alert">{error}</p>
-        <Link to="/applications">Back to applications</Link>
-      </div>
+      <AppLayout>
+        <Alert variant="error">{error}</Alert>
+        <p className="mt-4">
+          <Link to="/applications" className="text-accent hover:underline">
+            ← Back to applications
+          </Link>
+        </p>
+      </AppLayout>
     );
   }
 
   if (!application) {
-    return <p>Loading…</p>;
+    return (
+      <AppLayout>
+        <Spinner />
+      </AppLayout>
+    );
   }
 
   const next = NEXT_STATUS[application.status];
   const isTerminal = ["OFFER", "REJECTED", "WITHDRAWN"].includes(application.status);
 
   return (
-    <div>
-      <p>
-        <Link to="/applications">← Applications</Link>
+    <AppLayout>
+      <p className="mb-4">
+        <Link to="/applications" className="text-sm text-accent hover:underline">
+          ← Applications
+        </Link>
       </p>
-      <h1>
-        {application.jobTitleSnapshot} — {application.companySnapshot}
-      </h1>
-      <p>Status: {application.status.replaceAll("_", " ")}</p>
-      {error && <p role="alert">{error}</p>}
-      {!isTerminal && (
-        <p>
-          {next && <button onClick={advance}>Advance to {next.replaceAll("_", " ")}</button>}{" "}
-          <button onClick={() => reject("REJECTED")}>Mark rejected</button>{" "}
-          <button onClick={() => reject("WITHDRAWN")}>Withdraw</button>
-        </p>
+
+      <PageHeader
+        title={`${application.jobTitleSnapshot} — ${application.companySnapshot}`}
+        subtitle={<StatusBadge status={application.status} />}
+        actions={
+          !isTerminal ? (
+            <>
+              {next && (
+                <Button variant="primary" onClick={advance}>
+                  Advance to {next.replaceAll("_", " ")}
+                </Button>
+              )}
+              <Button onClick={() => reject("REJECTED")}>Mark rejected</Button>
+              <Button onClick={() => reject("WITHDRAWN")}>Withdraw</Button>
+            </>
+          ) : undefined
+        }
+      />
+
+      {error && <Alert variant="error" className="mb-4">{error}</Alert>}
+      {application.notes && (
+        <Card className="mb-6">
+          <p className="text-sm text-muted">{application.notes}</p>
+        </Card>
       )}
-      {application.notes && <p>Notes: {application.notes}</p>}
 
-      <h2>Interview logs</h2>
-      {contributeMessage && <p role="status">{contributeMessage}</p>}
-      {logs.length === 0 && <p>No interview logs yet.</p>}
-      <ul>
-        {logs.map((log) => (
-          <li key={log.id}>
-            Round {log.roundNumber} — {log.roundType.replaceAll("_", " ")}
-            {log.notes ? `: ${log.notes}` : ""}{" "}
-            {log.contributedAt ? (
-              <em>({log.contributionStatus?.toLowerCase() ?? "contributed"})</em>
-            ) : (
-              <button onClick={() => contribute(log.id)}>Contribute anonymously</button>
-            )}
-          </li>
-        ))}
-      </ul>
+      <h2 className="mb-3 text-lg font-semibold">Interview logs</h2>
+      {contributeMessage && <Alert variant="success" className="mb-4">{contributeMessage}</Alert>}
 
-      <h3>Add interview log</h3>
-      <form onSubmit={submitLog}>
-        <label>
-          Round type{" "}
-          <select
-            value={roundType}
-            onChange={(e) => setRoundType(e.target.value as InterviewRoundType)}
-          >
-            {ROUND_TYPES.map((rt) => (
-              <option key={rt} value={rt}>
-                {rt.replaceAll("_", " ")}
-              </option>
-            ))}
-          </select>
-        </label>{" "}
-        <label>
-          Notes{" "}
-          <input value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </label>{" "}
-        <button type="submit">Add log</button>
-      </form>
-    </div>
+      {logs.length === 0 ? (
+        <p className="mb-6 text-sm text-muted">No interview logs yet.</p>
+      ) : (
+        <div className="mb-6 flex flex-col gap-3">
+          {logs.map((log) => (
+            <Card key={log.id}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium">
+                    Round {log.roundNumber} · {log.roundType.replaceAll("_", " ")}
+                  </p>
+                  {log.notes && <p className="mt-1 text-sm text-muted">{log.notes}</p>}
+                </div>
+                {log.contributedAt ? (
+                  <Badge tone="neutral">{log.contributionStatus?.toLowerCase() ?? "contributed"}</Badge>
+                ) : (
+                  <Button size="sm" onClick={() => contribute(log.id)}>
+                    Contribute anonymously
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Card>
+        <h3 className="mb-4 text-base font-semibold">Add interview log</h3>
+        <form onSubmit={submitLog} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <Field label="Round type" className="sm:w-56">
+            <Select value={roundType} onChange={(e) => setRoundType(e.target.value as InterviewRoundType)}>
+              {ROUND_TYPES.map((rt) => (
+                <option key={rt} value={rt}>
+                  {rt.replaceAll("_", " ")}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Notes" className="flex-1">
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </Field>
+          <Button type="submit" variant="primary">
+            Add log
+          </Button>
+        </form>
+      </Card>
+    </AppLayout>
   );
 }

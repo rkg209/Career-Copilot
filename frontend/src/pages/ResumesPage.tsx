@@ -8,6 +8,8 @@ import {
   type ResumeVersion,
 } from "../api";
 import { GapReport } from "../components/GapReport";
+import { AppLayout } from "../components/AppLayout";
+import { Alert, Badge, Button, Card, EmptyState, PageHeader } from "../components/ui";
 
 export function ResumesPage() {
   const token = localStorage.getItem("token");
@@ -37,63 +39,77 @@ export function ResumesPage() {
   };
 
   return (
-    <div>
-      <p>
-        <Link to="/jobs">← Jobs</Link> · <Link to="/profile">Profile</Link>
-      </p>
-      <h1>My resumes</h1>
-      {error && <p role="alert">{error}</p>}
-      {resumes.length === 0 && !error && (
-        <p>
-          No tailored resumes yet. Open a job and click “Tailor resume for this job”.
-        </p>
-      )}
-      {resumes.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>Template</th>
-              <th>Job</th>
-              <th>Status</th>
-              <th></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {resumes.map((r) => (
-              <tr key={r.resumeVersionId}>
-                <td>{new Date(r.createdAt).toLocaleString()}</td>
-                <td>{r.templateId}</td>
-                <td>
-                  <Link to={`/jobs/${r.jobPostingId}`}>#{r.jobPostingId}</Link>
-                </td>
-                <td>{r.renderStatus}</td>
-                <td>
-                  <button
-                    onClick={() =>
-                      downloadResumePdf(r.resumeVersionId, token).catch(() =>
-                        setError("Download failed — the PDF may still be rendering; try again."),
-                      )
-                    }
-                  >
-                    Download PDF
-                  </button>
-                </td>
-                <td>
-                  <button
-                    disabled={scoringId === r.resumeVersionId}
-                    onClick={() => score(r)}
-                  >
-                    {scoringId === r.resumeVersionId ? "Scoring…" : "ATS score vs job"}
-                  </button>
-                </td>
+    <AppLayout>
+      <PageHeader title="My resumes" subtitle="Every tailored resume, ready to download or score." />
+
+      {error && <Alert variant="error" className="mb-4">{error}</Alert>}
+
+      {resumes.length === 0 && !error ? (
+        <EmptyState
+          title="No tailored resumes yet"
+          description="Open a job and click “Tailor resume” to generate your first one."
+          action={
+            <Link to="/jobs">
+              <Button variant="primary">Browse jobs</Button>
+            </Link>
+          }
+        />
+      ) : (
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b text-xs uppercase tracking-wide text-muted">
+                <th className="px-4 py-3 font-medium">Created</th>
+                <th className="px-4 py-3 font-medium">Template</th>
+                <th className="px-4 py-3 font-medium">Job</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {resumes.map((r) => (
+                <tr key={r.resumeVersionId} className="border-b last:border-0">
+                  <td className="px-4 py-3 text-muted">{new Date(r.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-3">{r.templateId}</td>
+                  <td className="px-4 py-3">
+                    <Link to={`/jobs/${r.jobPostingId}`} className="text-accent hover:underline">
+                      #{r.jobPostingId}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge tone={r.renderStatus === "RENDERED" ? "success" : r.renderStatus === "FAILED" ? "danger" : "warning"}>
+                      {r.renderStatus}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          downloadResumePdf(r.resumeVersionId, token).catch(() =>
+                            setError("Download failed — the PDF may still be rendering; try again."),
+                          )
+                        }
+                      >
+                        Download PDF
+                      </Button>
+                      <Button size="sm" variant="primary" disabled={scoringId === r.resumeVersionId} onClick={() => score(r)}>
+                        {scoringId === r.resumeVersionId ? "Scoring…" : "ATS score"}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
-      {report && <GapReport report={report} />}
-    </div>
+
+      {report && (
+        <div className="mt-6">
+          <GapReport report={report} />
+        </div>
+      )}
+    </AppLayout>
   );
 }

@@ -12,6 +12,8 @@ import {
   type ResumeVersion,
   type TemplateInfo,
 } from "../api";
+import { AppLayout } from "../components/AppLayout";
+import { Alert, Badge, Button, Card, PageHeader, Spinner } from "../components/ui";
 
 export function TailorPage() {
   const { id } = useParams();
@@ -69,76 +71,111 @@ export function TailorPage() {
   }
 
   return (
-    <div>
-      <p>
-        <Link to={`/jobs/${id}`}>← Back to job</Link> · <Link to="/resumes">My resumes</Link>
+    <AppLayout>
+      <p className="mb-4">
+        <Link to={`/jobs/${id}`} className="text-sm text-accent hover:underline">
+          ← Back to job
+        </Link>
       </p>
-      <h1>Tailor resume</h1>
-      {job && (
-        <p>
-          For: <strong>{job.title}</strong> at <strong>{job.company}</strong>
-        </p>
-      )}
+      <PageHeader
+        title="Tailor resume"
+        subtitle={
+          job ? (
+            <>
+              For <span className="font-medium text-fg">{job.title}</span> at{" "}
+              <span className="font-medium text-fg">{job.company}</span>
+            </>
+          ) : undefined
+        }
+      />
 
-      <h2>1. Pick a template</h2>
-      <div>
-        {templates.map((t) => (
-          <label key={t.id} style={{ display: "block", marginBottom: "0.25rem" }}>
-            <input
-              type="radio"
-              name="template"
-              value={t.id}
-              checked={templateId === t.id}
-              onChange={() => setTemplateId(t.id)}
-            />{" "}
-            {t.displayName}
-          </label>
-        ))}
-      </div>
+      <Card className="mb-6">
+        <h2 className="mb-4 text-lg font-semibold">1 · Pick a template</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {templates.map((t) => {
+            const selected = templateId === t.id;
+            return (
+              <label
+                key={t.id}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors duration-150 ${
+                  selected ? "border-accent bg-accent-soft" : "hover:border-accent"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="template"
+                  value={t.id}
+                  checked={selected}
+                  onChange={() => setTemplateId(t.id)}
+                  className="h-4 w-4 accent-[var(--color-accent)]"
+                />
+                {t.displayName}
+              </label>
+            );
+          })}
+        </div>
+      </Card>
 
-      <h2>2. Generate</h2>
-      <button onClick={onTailor} disabled={busy !== null}>
-        Tailor resume
-      </button>{" "}
-      <button onClick={onCoverLetter} disabled={busy !== null}>
-        Generate cover letter
-      </button>
-      {busy && <p>{busy}</p>}
-      {error && <p role="alert">{error}</p>}
+      <Card className="mb-6">
+        <h2 className="mb-4 text-lg font-semibold">2 · Generate</h2>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={onTailor} disabled={busy !== null} variant="primary">
+            Tailor resume
+          </Button>
+          <Button onClick={onCoverLetter} disabled={busy !== null}>
+            Generate cover letter
+          </Button>
+        </div>
+        {busy && <div className="mt-4"><Spinner label={busy} /></div>}
+        {error && <Alert variant="error" className="mt-4">{error}</Alert>}
+      </Card>
 
       {resume && (
-        <div>
-          <h2>Resume ready</h2>
-          <p>
-            Status: {resume.renderStatus} · model {resume.llmModel} · {resume.tokenCount} tokens
-          </p>
-          <button
-            onClick={() =>
-              downloadResumePdf(resume.resumeVersionId, token!).catch((e) =>
-                setError(e instanceof Error ? e.message : "Download failed"),
-              )
-            }
-          >
-            Download PDF
-          </button>
-        </div>
+        <Card glow className="mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Resume ready</h2>
+              <p className="mt-1 text-sm text-muted">
+                <Badge tone={resume.renderStatus === "RENDERED" ? "success" : "warning"}>{resume.renderStatus}</Badge>{" "}
+                · model {resume.llmModel} · {resume.tokenCount} tokens
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() =>
+                downloadResumePdf(resume.resumeVersionId, token!).catch((e) =>
+                  setError(e instanceof Error ? e.message : "Download failed"),
+                )
+              }
+            >
+              Download PDF
+            </Button>
+          </div>
+        </Card>
       )}
 
       {coverLetter && (
-        <div>
-          <h2>Cover letter ready</h2>
-          <p>Status: {coverLetter.renderStatus}</p>
-          <button
-            onClick={() =>
-              downloadCoverLetterPdf(coverLetter.coverLetterId, token!).catch((e) =>
-                setError(e instanceof Error ? e.message : "Download failed"),
-              )
-            }
-          >
-            Download PDF
-          </button>
-        </div>
+        <Card glow>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Cover letter ready</h2>
+              <p className="mt-1 text-sm text-muted">
+                <Badge tone={coverLetter.renderStatus === "RENDERED" ? "success" : "warning"}>{coverLetter.renderStatus}</Badge>
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() =>
+                downloadCoverLetterPdf(coverLetter.coverLetterId, token!).catch((e) =>
+                  setError(e instanceof Error ? e.message : "Download failed"),
+                )
+              }
+            >
+              Download PDF
+            </Button>
+          </div>
+        </Card>
       )}
-    </div>
+    </AppLayout>
   );
 }

@@ -48,19 +48,21 @@ embedding:
 llm:
   tiers:
     EXTRACTION:
-      model: ${LLM_EXTRACTION_MODEL:meta-llama/llama-3.1-8b-instruct}
+      # Free OpenRouter model with native structured-output support (Claude API expired).
+      model: ${LLM_EXTRACTION_MODEL:google/gemma-4-31b-it:free}
       max-tokens: 1500
       temperature: 0.2
     TAILORING:
-      model: ${LLM_TAILORING_MODEL:anthropic/claude-sonnet-4.5}
+      # Free OpenRouter model; gpt-oss-120b advertises reliable structured JSON output.
+      model: ${LLM_TAILORING_MODEL:openai/gpt-oss-120b:free}
       max-tokens: 2500
       temperature: 0.4
     SCORING_AUGMENTATION:
-      model: ${LLM_EXTRACTION_MODEL:meta-llama/llama-3.1-8b-instruct}
+      model: ${LLM_EXTRACTION_MODEL:google/gemma-4-31b-it:free}
       max-tokens: 1500
       temperature: 0.2
     COVER_LETTER:
-      model: ${LLM_TAILORING_MODEL:anthropic/claude-sonnet-4.5}
+      model: ${LLM_TAILORING_MODEL:openai/gpt-oss-120b:free}
       max-tokens: 1200
       temperature: 0.5
 

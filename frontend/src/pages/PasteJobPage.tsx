@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { pasteJob } from "../api";
+import { AppLayout } from "../components/AppLayout";
+import { Alert, Button, Card, Field, Input, PageHeader, Textarea } from "../components/ui";
 
 export function PasteJobPage() {
   const token = localStorage.getItem("token");
@@ -31,39 +33,47 @@ export function PasteJobPage() {
   }
 
   return (
-    <div>
-      <p>
-        <Link to="/jobs">← Back to jobs</Link>
+    <AppLayout>
+      <p className="mb-4">
+        <Link to="/jobs" className="text-sm text-accent hover:underline">
+          ← Back to jobs
+        </Link>
       </p>
-      <h1>Paste a job</h1>
-      <form onSubmit={handleSubmit}>
-        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <input
-          placeholder="Company"
-          value={company}
-          onChange={(e) => setCompany(e.target.value)}
-          required
-        />
-        <input
-          placeholder="Location (optional)"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-        />
-        <input
-          placeholder="Original URL (optional)"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <textarea
-          placeholder="Paste the job description here (min 50 characters)"
-          value={rawText}
-          onChange={(e) => setRawText(e.target.value)}
-          rows={12}
-          required
-        />
-        <button type="submit">Save job</button>
-      </form>
-      {error && <p role="alert">{error}</p>}
-    </div>
+      <PageHeader title="Paste a job" subtitle="Add a posting to score and tailor against." />
+
+      <Card>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Title">
+              <Input placeholder="Senior Backend Engineer" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            </Field>
+            <Field label="Company">
+              <Input placeholder="Acme Inc." value={company} onChange={(e) => setCompany(e.target.value)} required />
+            </Field>
+            <Field label="Location" hint="Optional">
+              <Input placeholder="Remote · Bengaluru" value={location} onChange={(e) => setLocation(e.target.value)} />
+            </Field>
+            <Field label="Original URL" hint="Optional">
+              <Input placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Job description" hint="Minimum 50 characters">
+            <Textarea
+              placeholder="Paste the full job description here…"
+              value={rawText}
+              onChange={(e) => setRawText(e.target.value)}
+              rows={12}
+              required
+            />
+          </Field>
+          {error && <Alert variant="error">{error}</Alert>}
+          <div>
+            <Button type="submit" variant="primary">
+              Save job
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </AppLayout>
   );
 }

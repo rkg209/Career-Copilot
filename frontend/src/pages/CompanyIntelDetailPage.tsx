@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getCompanyIntel, type CompanyIntelDetail } from "../api";
+import { PublicLayout } from "../components/AppLayout";
+import { Alert, Badge, Card, PageHeader, Spinner } from "../components/ui";
 
 export function CompanyIntelDetailPage() {
   const { companyName } = useParams();
@@ -15,39 +17,45 @@ export function CompanyIntelDetailPage() {
   }, [companyName]);
 
   return (
-    <div>
-      <p>
-        <Link to="/intel">← Company interview intel</Link>
+    <PublicLayout>
+      <p className="mb-4">
+        <Link to="/intel" className="text-sm text-accent hover:underline">
+          ← Company interview intel
+        </Link>
       </p>
 
-      {error && <p role="alert">{error}</p>}
-      {!detail && !error && <p>Loading…</p>}
+      {error && <Alert variant="error">{error}</Alert>}
+      {!detail && !error && <Spinner />}
 
       {detail && (
         <>
-          <h1>{detail.company}</h1>
-          {detail.rounds.map((round) => (
-            <section key={round.roundType}>
-              <h2>
-                {round.roundType.replaceAll("_", " ")}
-                {round.roleCategory ? ` — ${round.roleCategory}` : ""}
-              </h2>
-              <p>
-                {round.entryCount} contribution{round.entryCount === 1 ? "" : "s"}
-                {round.difficulty != null ? ` · avg difficulty ${round.difficulty}/5` : ""}
-              </p>
-              {round.questions.length > 0 && (
-                <ul>
-                  {round.questions.map((question, i) => (
-                    <li key={i}>{question}</li>
-                  ))}
-                </ul>
-              )}
-              {round.processNotes && <p>{round.processNotes}</p>}
-            </section>
-          ))}
+          <PageHeader title={detail.company} />
+          <div className="flex flex-col gap-4">
+            {detail.rounds.map((round) => (
+              <Card key={round.roundType}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-lg font-semibold">
+                    {round.roundType.replaceAll("_", " ")}
+                    {round.roleCategory ? ` — ${round.roleCategory}` : ""}
+                  </h2>
+                  {round.difficulty != null && <Badge tone="warning">difficulty {round.difficulty}/5</Badge>}
+                </div>
+                <p className="mt-1 text-sm text-muted">
+                  {round.entryCount} contribution{round.entryCount === 1 ? "" : "s"}
+                </p>
+                {round.questions.length > 0 && (
+                  <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+                    {round.questions.map((question, i) => (
+                      <li key={i}>{question}</li>
+                    ))}
+                  </ul>
+                )}
+                {round.processNotes && <p className="mt-3 text-sm text-muted">{round.processNotes}</p>}
+              </Card>
+            ))}
+          </div>
         </>
       )}
-    </div>
+    </PublicLayout>
   );
 }

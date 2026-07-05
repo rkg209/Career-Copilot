@@ -1,6 +1,18 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { listJobs, searchJobs, type JobPosting, type Page } from "../api";
+import { AppLayout } from "../components/AppLayout";
+import {
+  Alert,
+  Button,
+  Card,
+  Chip,
+  EmptyState,
+  Input,
+  PageHeader,
+  Select,
+  Spinner,
+} from "../components/ui";
 
 const PAGE_SIZE = 20;
 
@@ -42,75 +54,98 @@ export function JobsPage() {
   }
 
   return (
-    <div>
-      <h1>Jobs</h1>
-      <p>
-        <Link to="/">Home</Link> · <Link to="/jobs/paste">Paste a job</Link> ·{" "}
-        <Link to="/profile">My profile</Link>
-      </p>
+    <AppLayout>
+      <PageHeader
+        title="Jobs"
+        subtitle="Search live and saved postings, then tailor a resume."
+        actions={
+          <Link to="/jobs/paste">
+            <Button variant="primary">Paste a job</Button>
+          </Link>
+        }
+      />
 
-      <form onSubmit={handleSearch}>
-        <input placeholder="Keyword" value={q} onChange={(e) => setQ(e.target.value)} />
-        <input
-          placeholder="Location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-        />
-        <select value={remoteType} onChange={(e) => setRemoteType(e.target.value)}>
-          <option value="">Any location type</option>
-          <option value="remote">Remote</option>
-          <option value="hybrid">Hybrid</option>
-          <option value="onsite">Onsite</option>
-        </select>
-        <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value)}>
-          <option value="">Any type</option>
-          <option value="full_time">Full-time</option>
-          <option value="contract">Contract</option>
-          <option value="part_time">Part-time</option>
-        </select>
-        <input
-          type="number"
-          placeholder="Min salary"
-          value={salaryMin}
-          onChange={(e) => setSalaryMin(e.target.value)}
-        />
-        <button type="submit">Search</button>
-      </form>
+      <Card className="mb-6">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <Input
+            className="lg:col-span-2"
+            placeholder="Keyword"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <Input
+            placeholder="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+          <Select value={remoteType} onChange={(e) => setRemoteType(e.target.value)}>
+            <option value="">Any location type</option>
+            <option value="remote">Remote</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="onsite">Onsite</option>
+          </Select>
+          <Select value={employmentType} onChange={(e) => setEmploymentType(e.target.value)}>
+            <option value="">Any type</option>
+            <option value="full_time">Full-time</option>
+            <option value="contract">Contract</option>
+            <option value="part_time">Part-time</option>
+          </Select>
+          <div className="flex gap-3">
+            <Input
+              type="number"
+              placeholder="Min salary"
+              value={salaryMin}
+              onChange={(e) => setSalaryMin(e.target.value)}
+            />
+            <Button type="submit" variant="primary">
+              Search
+            </Button>
+          </div>
+        </form>
+      </Card>
 
-      {error && <p role="alert">{error}</p>}
-      {!data && !error && <p>Loading…</p>}
-      {data && data.content.length === 0 && <p>No jobs found.</p>}
+      {error && <Alert variant="error">{error}</Alert>}
+      {!data && !error && <Spinner />}
+      {data && data.content.length === 0 && (
+        <EmptyState title="No jobs found" description="Try adjusting your filters or paste a job description." />
+      )}
 
-      <ul>
+      <div className="flex flex-col gap-3">
         {data?.content.map((job) => (
-          <li key={job.id}>
-            <Link to={`/jobs/${job.id}`}>
-              <strong>{job.title}</strong>
-            </Link>{" "}
-            — {job.company}
-            {job.location ? ` (${job.location})` : ""}
-            {job.remote ? " · Remote" : ""}
-          </li>
+          <Link key={job.id} to={`/jobs/${job.id}`} className="card transition-colors duration-150 hover:border-accent">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-base font-semibold">{job.title}</h2>
+                <p className="text-sm text-muted">
+                  {job.company}
+                  {job.location ? ` · ${job.location}` : ""}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {job.remote && <Chip>Remote</Chip>}
+                {job.employmentType && <Chip>{job.employmentType.replaceAll("_", " ")}</Chip>}
+              </div>
+            </div>
+          </Link>
         ))}
-      </ul>
+      </div>
 
       {data && data.page.totalPages > 1 && (
-        <div>
-          <button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <Button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
             Previous
-          </button>
-          <span>
-            {" "}
-            Page {data.page.number + 1} of {data.page.totalPages}{" "}
+          </Button>
+          <span className="text-sm text-muted">
+            Page {data.page.number + 1} of {data.page.totalPages}
           </span>
-          <button
+          <Button
             disabled={page >= data.page.totalPages - 1}
             onClick={() => setPage((p) => p + 1)}
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
-    </div>
+    </AppLayout>
   );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { browseCompanyIntel, type CompanyIntelSummary, type Page } from "../api";
+import { PublicLayout } from "../components/AppLayout";
+import { Alert, Button, Chip, EmptyState, PageHeader, Spinner } from "../components/ui";
 
 const PAGE_SIZE = 20;
 
@@ -16,51 +18,56 @@ export function CompanyIntelPage() {
   }, [page]);
 
   return (
-    <div>
-      <h1>Company interview intel</h1>
-      <p>
-        <Link to="/">Home</Link>
-      </p>
-      <p>
-        Anonymized, community-contributed interview questions and process notes. A company
-        appears here only once at least a few contributors have shared their experience.
-      </p>
+    <PublicLayout>
+      <PageHeader
+        title="Company interview intel"
+        subtitle="Anonymized, community-contributed interview questions and process notes. A company appears here only once a few contributors have shared their experience."
+      />
 
-      {error && <p role="alert">{error}</p>}
-      {!data && !error && <p>Loading…</p>}
-      {data && data.content.length === 0 && <p>No published company intel yet.</p>}
+      {error && <Alert variant="error">{error}</Alert>}
+      {!data && !error && <Spinner />}
+      {data && data.content.length === 0 && (
+        <EmptyState title="No published company intel yet" description="Check back once contributors have shared." />
+      )}
 
-      <ul>
+      <div className="flex flex-col gap-3">
         {data?.content.map((summary) => (
-          <li key={summary.company}>
-            <Link to={`/intel/${encodeURIComponent(summary.company)}`}>
-              <strong>{summary.company}</strong>
-            </Link>{" "}
-            — {summary.entryCount} contribution{summary.entryCount === 1 ? "" : "s"}
-            {summary.avgDifficulty != null ? ` · avg difficulty ${summary.avgDifficulty}/5` : ""}
-            {" · "}
-            {summary.roundTypes.map((rt) => rt.replaceAll("_", " ")).join(", ")}
-          </li>
+          <Link
+            key={summary.company}
+            to={`/intel/${encodeURIComponent(summary.company)}`}
+            className="card transition-colors duration-150 hover:border-accent"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-base font-semibold">{summary.company}</h2>
+                <p className="text-sm text-muted">
+                  {summary.entryCount} contribution{summary.entryCount === 1 ? "" : "s"}
+                  {summary.avgDifficulty != null ? ` · avg difficulty ${summary.avgDifficulty}/5` : ""}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {summary.roundTypes.map((rt) => (
+                  <Chip key={rt}>{rt.replaceAll("_", " ")}</Chip>
+                ))}
+              </div>
+            </div>
+          </Link>
         ))}
-      </ul>
+      </div>
 
       {data && data.page.totalPages > 1 && (
-        <div>
-          <button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <Button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
             Previous
-          </button>
-          <span>
-            {" "}
-            Page {data.page.number + 1} of {data.page.totalPages}{" "}
+          </Button>
+          <span className="text-sm text-muted">
+            Page {data.page.number + 1} of {data.page.totalPages}
           </span>
-          <button
-            disabled={page >= data.page.totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-          >
+          <Button disabled={page >= data.page.totalPages - 1} onClick={() => setPage((p) => p + 1)}>
             Next
-          </button>
+          </Button>
         </div>
       )}
-    </div>
+    </PublicLayout>
   );
 }
