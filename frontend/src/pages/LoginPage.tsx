@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api";
 import { AuthLayout } from "../components/AuthLayout";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Alert, Button, Field, Input, PasswordInput } from "../components/ui";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -47,9 +47,8 @@ export function LoginPage() {
           />
         </Field>
         <Field label="Password" htmlFor="password">
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

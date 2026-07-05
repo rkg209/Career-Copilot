@@ -11,6 +11,7 @@ import com.careercopilot.auth.dto.AuthResponseDto;
 import com.careercopilot.auth.dto.LoginRequestDto;
 import com.careercopilot.auth.dto.RegisterRequestDto;
 import com.careercopilot.auth.dto.UserResponseDto;
+import com.careercopilot.profile.CandidateProfileRepository;
 import com.careercopilot.shared.JwtService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class AuthServiceTest {
 
   @Mock private UserRepository userRepository;
+  @Mock private CandidateProfileRepository profileRepository;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private JwtService jwtService;
 
@@ -31,7 +33,7 @@ class AuthServiceTest {
 
   @BeforeEach
   void setUp() {
-    authService = new AuthService(userRepository, passwordEncoder, jwtService);
+    authService = new AuthService(userRepository, profileRepository, passwordEncoder, jwtService);
   }
 
   @Test

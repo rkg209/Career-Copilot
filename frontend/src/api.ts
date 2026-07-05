@@ -31,10 +31,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function register(email: string, password: string): Promise<UserResponse> {
+export function register(email: string, password: string, name?: string): Promise<UserResponse> {
   return request<UserResponse>("/api/v1/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, name }),
   });
 }
 

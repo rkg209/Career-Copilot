@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -6,6 +6,7 @@ import { JobsPage } from "./pages/JobsPage";
 import { JobDetailPage } from "./pages/JobDetailPage";
 import { PasteJobPage } from "./pages/PasteJobPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { TailorPage } from "./pages/TailorPage";
 import { ResumesPage } from "./pages/ResumesPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
@@ -23,6 +24,7 @@ function App() {
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/paste" element={<PasteJobPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/jobs/:id/tailor" element={<TailorPage />} />
         <Route path="/resumes" element={<ResumesPage />} />
@@ -30,6 +32,7 @@ function App() {
         <Route path="/applications/:id" element={<ApplicationDetailPage />} />
         <Route path="/intel" element={<CompanyIntelPage />} />
         <Route path="/intel/:companyName" element={<CompanyIntelDetailPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

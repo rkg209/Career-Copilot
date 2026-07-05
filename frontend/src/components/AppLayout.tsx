@@ -1,81 +1,125 @@
-import type { ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import { me } from "../api";
 import { ThemeToggle } from "./ThemeToggle";
+import { Sidebar, Brand, PRIMARY_NAV } from "./Sidebar";
+import { Footer } from "./Footer";
+import { MenuIcon } from "./icons";
 
-const NAV_LINKS = [
-  { to: "/jobs", label: "Jobs" },
-  { to: "/applications", label: "Applications" },
-  { to: "/resumes", label: "Resumes" },
-  { to: "/intel", label: "Company Intel" },
-  { to: "/profile", label: "Profile" },
-];
-
-function Brand() {
+function HeaderNav() {
+  const { pathname } = useLocation();
+  const isActive = (to: string) => pathname.startsWith(to);
   return (
-    <Link to="/" className="flex items-center gap-2 font-semibold text-fg">
-      <span className="text-accent" aria-hidden="true">◆</span>
-      <span>Career Copilot</span>
-    </Link>
+    <nav className="hidden items-center gap-1 md:flex">
+      {PRIMARY_NAV.map((item) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          aria-current={isActive(item.to) ? "page" : undefined}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
+            isActive(item.to) ? "bg-accent-soft text-accent" : "text-muted hover:text-fg"
+          }`}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
-/** Authenticated shell: sticky nav + centered content container. */
+/**
+ * Authenticated app shell: filled top header (brand + horizontal nav) plus a
+ * togglable right-side drawer (hidden by default) and a footer. Centralizes the
+ * auth guard and loads the signed-in user once for the drawer identity block.
+ */
 export function AppLayout({ children }: { children: ReactNode }) {
+  const token = localStorage.getItem("token");
   const location = useLocation();
-  const navigate = useNavigate();
+  const [email, setEmail] = useState<string | null>(null);
+  const [authFailed, setAuthFailed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  useEffect(() => {
+    if (!token) return;
+    me(token)
+      .then((u) => setEmail(u.email))
+      .catch(() => setAuthFailed(true));
+  }, [token]);
 
-  const isActive = (to: string) =>
-    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+  // Close the drawer whenever the route changes.
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  // Close on Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  if (!token || authFailed) {
+    if (authFailed) localStorage.removeItem("token");
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <header className="sticky top-0 z-20 border-b bg-canvas/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
+        <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Brand />
-          <nav className="flex flex-1 flex-wrap items-center gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
-                  isActive(link.to)
-                    ? "bg-accent-soft text-accent"
-                    : "text-muted hover:text-fg"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <button type="button" onClick={logout} className="btn btn-ghost btn-sm">
-              Log out
+          <div className="mx-2 hidden h-6 w-px bg-line md:block" aria-hidden="true" />
+          <HeaderNav />
+          <div className="flex flex-1 items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className="btn btn-secondary btn-sm !px-2"
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+            >
+              <MenuIcon width={18} height={18} />
             </button>
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+
+      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} email={email} />
+
+      <main className="flex-1">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
 
-/** Minimal header (brand + theme toggle) for public, unauthenticated pages. */
+/** Minimal public shell (brand + theme toggle + footer) for unauthenticated pages. */
 export function PublicLayout({ children }: { children: ReactNode }) {
+  const isAuthed = Boolean(localStorage.getItem("token"));
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <header className="sticky top-0 z-20 border-b bg-canvas/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Brand />
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {isAuthed ? (
+              <Link to="/" className="btn btn-secondary btn-sm">
+                Dashboard
+              </Link>
+            ) : (
+              <Link to="/login" className="btn btn-primary btn-sm">
+                Log in
+              </Link>
+            )}
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="flex-1">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>
+      </main>
+      <Footer />
     </div>
   );
 }
