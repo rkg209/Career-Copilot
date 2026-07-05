@@ -83,6 +83,10 @@ public class ApplicationService {
     if (companySnapshot == null || companySnapshot.isBlank()) {
       throw new BadRequestException("companySnapshot is required when jobPostingId is omitted");
     }
+    // Normalize snapshots so the intel table's trimmed company value (written by
+    // AnonymizationService) and the log-flip lookup (findIdsByCompanySnapshot) always agree.
+    jobTitleSnapshot = jobTitleSnapshot.trim();
+    companySnapshot = companySnapshot.trim();
 
     if (request.resumeVersionId() != null) {
       assertOwnedResumeVersion(user.getId(), request.resumeVersionId());

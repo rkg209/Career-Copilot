@@ -6,7 +6,7 @@ CREATE TABLE company_interview_intel (
     round_type       interview_round_type NOT NULL,
     questions        TEXT[]               NOT NULL DEFAULT '{}',
     process_notes    TEXT,
-    difficulty       SMALLINT             CHECK (difficulty BETWEEN 1 AND 5),
+    difficulty       INTEGER              CHECK (difficulty BETWEEN 1 AND 5),
     is_published     BOOLEAN              NOT NULL DEFAULT false,
     staging_batch_id UUID,
     published_at     TIMESTAMPTZ,
