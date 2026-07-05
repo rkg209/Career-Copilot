@@ -7,5 +7,7 @@ public enum JobSource {
   USAJOBS,
   MANUAL_PASTE,
   GREENHOUSE,
-  LEVER
+  LEVER,
+  ASHBY,
+  JOOBLE
 }

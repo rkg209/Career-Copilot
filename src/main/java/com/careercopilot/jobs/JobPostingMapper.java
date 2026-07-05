@@ -11,7 +11,12 @@ final class JobPostingMapper {
 
   private JobPostingMapper() {}
 
-  /** Copies every normalized field onto an entity (new or existing) and stamps ingestion time. */
+  /**
+   * Copies every normalized field onto an entity (new or existing) and stamps ingestion time. Does
+   * NOT touch {@code matchedRoles} — role tagging is owned by the ingestion upsert, which unions
+   * the new roles into the existing set (see {@code JobIngestionService}). This preserves overwrite
+   * semantics for source fields while accumulating role tags across sources/runs.
+   */
   static void merge(JobPosting entity, NormalizedJob n) {
     entity.setSource(n.source());
     entity.setExternalId(n.externalId());
@@ -57,8 +62,10 @@ final class JobPostingMapper {
         j.getSalaryCurrency(),
         List.copyOf(j.getSkills()),
         List.copyOf(j.getResponsibilities()),
+        List.copyOf(j.getMatchedRoles()),
         j.getFullText(),
         j.getUrl(),
-        j.getPostedAt());
+        j.getPostedAt(),
+        j.getIngestedAt());
   }
 }

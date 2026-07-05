@@ -3,6 +3,7 @@ package com.careercopilot.jobs;
 import com.careercopilot.jobs.dto.JobPasteRequest;
 import com.careercopilot.jobs.dto.JobPostingResponse;
 import com.careercopilot.jobs.dto.JobSearchCriteria;
+import com.careercopilot.jobs.dto.RolesResponse;
 import com.careercopilot.shared.BadRequestException;
 import com.careercopilot.shared.PageResponse;
 import jakarta.validation.Valid;
@@ -38,10 +39,16 @@ public class JobController {
 
   @GetMapping
   public PageResponse<JobPostingResponse> list(
+      @RequestParam(required = false) String role,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "postedAt,desc") String sort) {
-    return jobService.list(page, size, sort);
+    return jobService.list(page, size, sort, role);
+  }
+
+  @GetMapping("/roles")
+  public RolesResponse roles() {
+    return jobService.roles();
   }
 
   @GetMapping("/search")
@@ -52,6 +59,7 @@ public class JobController {
       @RequestParam(required = false) String employmentType,
       @RequestParam(required = false) BigDecimal salaryMin,
       @RequestParam(required = false) String postedAfter,
+      @RequestParam(required = false) String role,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "postedAt,desc") String sort) {
@@ -62,7 +70,8 @@ public class JobController {
             toRemoteFilter(remoteType),
             validateEmploymentType(employmentType),
             salaryMin,
-            toInstant(postedAfter));
+            toInstant(postedAfter),
+            role);
     return jobService.search(criteria, page, size, sort);
   }
 

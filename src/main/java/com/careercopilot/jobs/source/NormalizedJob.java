@@ -27,4 +27,27 @@ public record NormalizedJob(
     String url,
     Instant postedAt,
     Instant expiresAt,
-    UUID pastedByUserId) {}
+    UUID pastedByUserId) {
+
+  /** Returns a copy with the skills replaced — used by the ingestion-time skill extractor. */
+  public NormalizedJob withSkills(List<String> newSkills) {
+    return new NormalizedJob(
+        source,
+        externalId,
+        title,
+        company,
+        location,
+        remote,
+        employmentType,
+        salaryMin,
+        salaryMax,
+        salaryCurrency,
+        newSkills,
+        responsibilities,
+        fullText,
+        url,
+        postedAt,
+        expiresAt,
+        pastedByUserId);
+  }
+}

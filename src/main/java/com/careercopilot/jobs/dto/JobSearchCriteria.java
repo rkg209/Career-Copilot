@@ -13,4 +13,5 @@ public record JobSearchCriteria(
     Boolean remote,
     String employmentType,
     BigDecimal salaryMin,
-    Instant postedAfter) {}
+    Instant postedAfter,
+    String role) {}

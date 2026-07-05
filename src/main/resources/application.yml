@@ -83,22 +83,55 @@ tailoring:
 
 jobs:
   ingestion:
-    cron: ${JOBS_INGESTION_CRON:0 0 */6 * * *}
+    cron: ${JOBS_INGESTION_CRON:0 0 */12 * * *}
+  freshness:
+    max-age-days: ${JOBS_FRESHNESS_MAX_AGE_DAYS:45}
+    sweep-cron: ${JOBS_FRESHNESS_SWEEP_CRON:0 30 * * * *}
   adapters:
-    enabled: ${JOBS_ADAPTERS_ENABLED:REMOTEOK,GREENHOUSE}
+    enabled: ${JOBS_ADAPTERS_ENABLED:REMOTEOK,GREENHOUSE,LEVER,ASHBY,ADZUNA,JOOBLE}
+  # Locations searched per role by the query-driven aggregators.
+  search-locations: ${JOBS_SEARCH_LOCATIONS:India,Remote}
+  # Curated role presets. key -> {label, keywords}. Keywords drive aggregator search AND role tagging.
+  roles:
+    ai-ml-engineer:
+      label: "AI / ML Engineer"
+      keywords: ${JOBS_ROLE_AI_ML_KEYWORDS:machine learning,ml engineer,ai engineer,applied scientist,research scientist,deep learning,llm,genai}
+    software-engineer:
+      label: "Software Engineer"
+      keywords: ${JOBS_ROLE_SWE_KEYWORDS:software engineer,software development engineer,backend engineer,full stack,platform engineer}
+    data-scientist:
+      label: "Data Scientist / Analyst"
+      keywords: ${JOBS_ROLE_DS_KEYWORDS:data scientist,data analyst,analytics engineer}
+    quant:
+      label: "Quant / Trading"
+      keywords: ${JOBS_ROLE_QUANT_KEYWORDS:quantitative developer,quantitative researcher,quant,trading systems,hft}
+  targets:
+    # Only postings whose title matches a keyword below are ingested. Empty list = keep everything.
+    title-keywords: ${JOBS_TARGET_TITLE_KEYWORDS:machine learning,ml engineer,ai engineer,applied scientist,deep learning,llm,genai,software engineer,software development engineer,backend engineer,platform engineer,systems engineer,quantitative developer,quantitative researcher,quant,hft,trading systems}
+    # Kept only if remote OR location matches a term below. Empty list = no location filter.
+    location-terms: ${JOBS_TARGET_LOCATION_TERMS:india,bengaluru,bangalore,hyderabad,pune,delhi,gurgaon,gurugram,noida,mumbai,chennai,remote,singapore,japan,tokyo}
+    # Reserved for future ranking; not a hard filter in v1.
+    experience-terms: ${JOBS_TARGET_EXPERIENCE_TERMS:intern,new grad,new-grad,graduate,entry level,entry-level,junior,associate}
   remoteok:
     base-url: ${REMOTEOK_BASE_URL:https://remoteok.com}
   greenhouse:
     base-url: ${GREENHOUSE_BASE_URL:https://boards-api.greenhouse.io}
-    companies: ${GREENHOUSE_COMPANIES:databricks,gitlab,airbnb,coinbase,stripe}
+    companies: ${GREENHOUSE_COMPANIES:databricks,gitlab,stripe,coinbase,airbnb,razorpay,postman,freshworks,zerodha,credavenue}
   lever:
     base-url: ${LEVER_BASE_URL:https://api.lever.co}
-    companies: ${LEVER_COMPANIES:}
+    companies: ${LEVER_COMPANIES:voleon,hudsonrivertrading,spotify}
+  ashby:
+    base-url: ${ASHBY_BASE_URL:https://api.ashbyhq.com}
+    companies: ${ASHBY_COMPANIES:ramp,notion,linear,openai,mistral}
   adzuna:
     base-url: ${ADZUNA_BASE_URL:https://api.adzuna.com}
     app-id: ${ADZUNA_APP_ID:}
     app-key: ${ADZUNA_APP_KEY:}
-    country: ${ADZUNA_COUNTRY:us}
+    country: ${ADZUNA_COUNTRY:in}
     results-per-page: ${ADZUNA_RESULTS_PER_PAGE:50}
-    pages: ${ADZUNA_PAGES:3}
-    currency: ${ADZUNA_CURRENCY:USD}
+    page-cap: ${ADZUNA_PAGE_CAP:2}
+    currency: ${ADZUNA_CURRENCY:INR}
+  jooble:
+    base-url: ${JOOBLE_BASE_URL:https://jooble.org}
+    api-key: ${JOOBLE_API_KEY:}
+    page-cap: ${JOOBLE_PAGE_CAP:1}

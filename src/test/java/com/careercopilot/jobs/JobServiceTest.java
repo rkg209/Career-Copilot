@@ -36,7 +36,8 @@ class JobServiceTest {
   @Mock private UserRepository userRepository;
 
   private JobService service() {
-    return new JobService(repository, new ManualPasteJobSource(), userRepository);
+    return new JobService(
+        repository, new ManualPasteJobSource(), userRepository, new RoleProperties());
   }
 
   @Test
@@ -83,7 +84,7 @@ class JobServiceTest {
     Page<JobPosting> page = new PageImpl<>(List.of(entity), pageable, 1);
     when(repository.findByActiveTrue(any(Pageable.class))).thenReturn(page);
 
-    PageResponse<JobPostingResponse> result = service().list(0, 20, "postedAt,desc");
+    PageResponse<JobPostingResponse> result = service().list(0, 20, "postedAt,desc", null);
 
     assertThat(result.content()).hasSize(1);
     assertThat(result.page().totalElements()).isEqualTo(1);
@@ -92,7 +93,7 @@ class JobServiceTest {
 
   @Test
   void list_sizeAboveMax_throwsBadRequest() {
-    assertThatThrownBy(() -> service().list(0, 101, "postedAt,desc"))
+    assertThatThrownBy(() -> service().list(0, 101, "postedAt,desc", null))
         .isInstanceOf(BadRequestException.class);
   }
 
@@ -106,12 +107,13 @@ class JobServiceTest {
             isNull(),
             any(BigDecimal.class),
             isNull(),
+            isNull(),
             any(Pageable.class)))
         .thenReturn(empty);
 
     JobSearchCriteria criteria =
         new JobSearchCriteria(
-            "java", "berlin", Boolean.TRUE, null, BigDecimal.valueOf(50000), null);
+            "java", "berlin", Boolean.TRUE, null, BigDecimal.valueOf(50000), null, null);
     PageResponse<JobPostingResponse> result = service().search(criteria, 0, 20, "postedAt,desc");
 
     assertThat(result.content()).isEmpty();
@@ -122,6 +124,7 @@ class JobServiceTest {
             eq(Boolean.TRUE),
             isNull(),
             any(BigDecimal.class),
+            isNull(),
             isNull(),
             any(Pageable.class));
   }

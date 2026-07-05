@@ -16,13 +16,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /**
- * Adapter for the Adzuna search API. Built now but only invoked when {@code ADZUNA} is present in
- * {@code jobs.adapters.enabled} and app_id/app_key are configured. The {@code country} config
- * scopes results to a region (e.g. {@code in} for India); {@code pages} controls how many result
- * pages are pulled per run.
+ * Query-driven adapter for the Adzuna search API. Given a {@link RoleQuery} it issues one search
+ * per page (up to {@code page-cap}) using {@code what_or} (OR of the role keywords) and {@code
+ * where} (the location), scoped to {@code country} (e.g. {@code in} for India). Enabled only when
+ * app_id and app_key are configured; otherwise {@link #isEnabled()} is false and ingestion skips
+ * it.
  */
 @Component
-public class AdzunaJobSource implements JobSourceAdapter {
+public class AdzunaJobSource implements QueryableJobSource {
 
   private static final Logger log = LoggerFactory.getLogger(AdzunaJobSource.class);
 
@@ -31,7 +32,7 @@ public class AdzunaJobSource implements JobSourceAdapter {
   private final String appKey;
   private final String country;
   private final int resultsPerPage;
-  private final int pages;
+  private final int pageCap;
   private final String currency;
 
   public AdzunaJobSource(
@@ -39,16 +40,16 @@ public class AdzunaJobSource implements JobSourceAdapter {
       @Value("${jobs.adzuna.base-url:https://api.adzuna.com}") String baseUrl,
       @Value("${jobs.adzuna.app-id:}") String appId,
       @Value("${jobs.adzuna.app-key:}") String appKey,
-      @Value("${jobs.adzuna.country:us}") String country,
+      @Value("${jobs.adzuna.country:in}") String country,
       @Value("${jobs.adzuna.results-per-page:50}") int resultsPerPage,
-      @Value("${jobs.adzuna.pages:3}") int pages,
-      @Value("${jobs.adzuna.currency:USD}") String currency) {
+      @Value("${jobs.adzuna.page-cap:2}") int pageCap,
+      @Value("${jobs.adzuna.currency:INR}") String currency) {
     this.restClient = builder.baseUrl(baseUrl).build();
     this.appId = appId;
     this.appKey = appKey;
     this.country = country;
     this.resultsPerPage = resultsPerPage;
-    this.pages = pages;
+    this.pageCap = pageCap;
     this.currency = currency;
   }
 
@@ -58,13 +59,20 @@ public class AdzunaJobSource implements JobSourceAdapter {
   }
 
   @Override
-  public List<NormalizedJob> fetch() {
-    if (appId.isBlank() || appKey.isBlank()) {
-      throw new IllegalStateException("Adzuna app-id/app-key not configured");
+  public boolean isEnabled() {
+    return !appId.isBlank() && !appKey.isBlank();
+  }
+
+  @Override
+  public List<NormalizedJob> fetch(RoleQuery query) {
+    if (!isEnabled()) {
+      log.warn("Adzuna app-id/app-key not configured; skipping");
+      return List.of();
     }
+    String whatOr = String.join(" ", query.keywords());
     List<NormalizedJob> jobs = new ArrayList<>();
-    for (int page = 1; page <= pages; page++) {
-      List<NormalizedJob> pageJobs = fetchPage(page);
+    for (int page = 1; page <= pageCap; page++) {
+      List<NormalizedJob> pageJobs = fetchPage(page, whatOr, query.location());
       if (pageJobs.isEmpty()) {
         break; // no more results
       }
@@ -73,7 +81,7 @@ public class AdzunaJobSource implements JobSourceAdapter {
     return jobs;
   }
 
-  private List<NormalizedJob> fetchPage(int page) {
+  private List<NormalizedJob> fetchPage(int page, String whatOr, String where) {
     JsonNode root =
         restClient
             .get()
@@ -83,6 +91,8 @@ public class AdzunaJobSource implements JobSourceAdapter {
                         .queryParam("app_id", appId)
                         .queryParam("app_key", appKey)
                         .queryParam("results_per_page", resultsPerPage)
+                        .queryParam("what_or", whatOr)
+                        .queryParam("where", where)
                         .build(country, page))
             .retrieve()
             .body(JsonNode.class);

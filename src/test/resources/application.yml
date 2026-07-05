@@ -38,6 +38,11 @@ jobs:
     enabled: MANUAL_PASTE
   ingestion:
     cron: "0 0 5 31 2 ?"
+  # Freshness sweep never fires within a test run (Feb 31); JobFreshnessIntegrationTest drives it directly.
+  freshness:
+    max-age-days: 45
+    sweep-cron: "0 0 5 31 2 ?"
+  # No jobs.targets here → JobTargetProperties defaults to empty lists → relevance filter passes all.
 
 # LlmGateway is mocked in all tests; tier values only satisfy config binding.
 llm:

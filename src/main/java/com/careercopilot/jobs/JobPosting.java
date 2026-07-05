@@ -60,6 +60,10 @@ public class JobPosting {
   @Column(nullable = false, columnDefinition = "text[]")
   private List<String> responsibilities = new ArrayList<>();
 
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "matched_roles", nullable = false, columnDefinition = "text[]")
+  private List<String> matchedRoles = new ArrayList<>();
+
   @Column(name = "full_text", nullable = false)
   private String fullText;
 
@@ -180,6 +184,14 @@ public class JobPosting {
 
   public void setResponsibilities(List<String> responsibilities) {
     this.responsibilities = responsibilities;
+  }
+
+  public List<String> getMatchedRoles() {
+    return matchedRoles;
+  }
+
+  public void setMatchedRoles(List<String> matchedRoles) {
+    this.matchedRoles = matchedRoles;
   }
 
   public String getFullText() {

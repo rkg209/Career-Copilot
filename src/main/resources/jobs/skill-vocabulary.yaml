@@ -1,0 +1,90 @@
+# Curated skill vocabulary for deterministic ingestion-time skill extraction (Job Ingestion v2).
+# A 1–3-gram of a job description is recorded as a skill when — after passing through the scoring
+# SkillAliasMap normalizer — it equals one of these entries. Entries are written in normalized form
+# (lowercase; punctuation collapsed to single spaces; '+' and '#' preserved). Aliases (e.g. "k8s",
+# "js", "ml") are handled by the SkillAliasMap and need not be repeated here — list the CANONICAL
+# form the alias map produces (e.g. "kubernetes", "javascript", "machine learning").
+skills:
+  # languages
+  - python
+  - java
+  - c++
+  - c#
+  - go
+  - rust
+  - scala
+  - kotlin
+  - javascript
+  - typescript
+  - ruby
+  - php
+  - swift
+  - matlab
+  - sql
+  - bash
+  # ai / ml
+  - machine learning
+  - deep learning
+  - natural language processing
+  - computer vision
+  - reinforcement learning
+  - pytorch
+  - tensorflow
+  - keras
+  - scikit learn
+  - pandas
+  - numpy
+  - hugging face
+  - transformers
+  - llm
+  - genai
+  - rag
+  - langchain
+  - mlops
+  - spark
+  - hadoop
+  - kafka
+  - airflow
+  # backend / web
+  - spring boot
+  - spring
+  - django
+  - flask
+  - fastapi
+  - node js
+  - express
+  - react
+  - angular
+  - vue
+  - graphql
+  - rest
+  - grpc
+  - microservices
+  # data / infra
+  - postgresql
+  - mysql
+  - mongodb
+  - redis
+  - elasticsearch
+  - cassandra
+  - snowflake
+  - aws
+  - google cloud
+  - azure
+  - kubernetes
+  - docker
+  - terraform
+  - jenkins
+  - cicd
+  - linux
+  - git
+  # quant
+  - c++ templates
+  - low latency
+  - high frequency trading
+  - fix protocol
+  - options
+  - derivatives
+  - time series
+  - stochastic calculus
+  - quantitative finance

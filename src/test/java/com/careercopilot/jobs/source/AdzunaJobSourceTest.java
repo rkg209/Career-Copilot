@@ -1,7 +1,6 @@
 package com.careercopilot.jobs.source;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -16,6 +15,8 @@ import org.springframework.web.client.RestClient;
 class AdzunaJobSourceTest {
 
   private static final String BASE_URL = "https://adzuna.test";
+  private static final RoleQuery QUERY =
+      new RoleQuery("data-scientist", List.of("data engineer", "data scientist"), "India");
 
   @Test
   void fetch_mapsResults_usingDisplayNameFallback() {
@@ -23,14 +24,14 @@ class AdzunaJobSourceTest {
         """
         {"results": [
           {"id": "a1", "title": "Data Engineer", "company": {"display_name": "Globex"},
-           "location": {"display_name": "New York"}, "description": "pipelines",
+           "location": {"display_name": "Bengaluru"}, "description": "pipelines",
            "redirect_url": "https://adzuna.test/a1", "created": "2026-06-20T00:00:00Z",
            "salary_min": 100000, "salary_max": 130000, "contract_time": "full_time"}
         ]}
         """;
-    AdzunaJobSource source = source(body, "us");
+    AdzunaJobSource source = source(body, "in");
 
-    List<NormalizedJob> jobs = source.fetch();
+    List<NormalizedJob> jobs = source.fetch(QUERY);
 
     assertThat(jobs).hasSize(1);
     NormalizedJob job = jobs.get(0);
@@ -38,10 +39,10 @@ class AdzunaJobSourceTest {
     assertThat(job.externalId()).isEqualTo("a1");
     assertThat(job.title()).isEqualTo("Data Engineer");
     assertThat(job.company()).isEqualTo("Globex");
-    assertThat(job.location()).isEqualTo("New York");
+    assertThat(job.location()).isEqualTo("Bengaluru");
     assertThat(job.employmentType()).isEqualTo("full_time");
     assertThat(job.salaryMin()).isEqualByComparingTo("100000");
-    assertThat(job.salaryCurrency()).isEqualTo("USD");
+    assertThat(job.salaryCurrency()).isEqualTo("INR");
     assertThat(job.postedAt()).isNotNull();
   }
 
@@ -58,17 +59,17 @@ class AdzunaJobSourceTest {
         """;
     AdzunaJobSource source = source(body, "in");
 
-    NormalizedJob job = source.fetch().get(0);
+    NormalizedJob job = source.fetch(QUERY).get(0);
 
-    assertThat(job.location()).contains("India");
     assertThat(job.location()).isEqualTo("India, Karnataka, Bengaluru");
   }
 
   @Test
-  void fetch_withoutCredentials_throws() {
+  void withoutCredentials_isDisabled_andFetchReturnsEmpty() {
     AdzunaJobSource source =
-        new AdzunaJobSource(RestClient.builder(), BASE_URL, "", "", "us", 50, 1, "USD");
-    assertThatThrownBy(source::fetch).isInstanceOf(IllegalStateException.class);
+        new AdzunaJobSource(RestClient.builder(), BASE_URL, "", "", "in", 50, 1, "INR");
+    assertThat(source.isEnabled()).isFalse();
+    assertThat(source.fetch(QUERY)).isEmpty();
   }
 
   private AdzunaJobSource source(String responseBody, String country) {
@@ -77,6 +78,6 @@ class AdzunaJobSourceTest {
     server
         .expect(requestTo(containsString("/v1/api/jobs/" + country + "/search/1")))
         .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
-    return new AdzunaJobSource(builder, BASE_URL, "app-id", "app-key", country, 50, 1, "USD");
+    return new AdzunaJobSource(builder, BASE_URL, "app-id", "app-key", country, 50, 1, "INR");
   }
 }

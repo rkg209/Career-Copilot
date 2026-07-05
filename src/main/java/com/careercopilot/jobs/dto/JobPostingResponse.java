@@ -19,6 +19,8 @@ public record JobPostingResponse(
     String salaryCurrency,
     List<String> skills,
     List<String> responsibilities,
+    List<String> matchedRoles,
     String fullText,
     String url,
-    Instant postedAt) {}
+    Instant postedAt,
+    Instant ingestedAt) {}
