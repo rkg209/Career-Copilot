@@ -68,6 +68,13 @@ export interface JobPosting {
   fullText: string;
   url: string | null;
   postedAt: string | null;
+  ingestedAt: string | null;
+}
+
+export interface IngestionStatus {
+  lastScrapedAt: string | null;
+  nextScrapedAt: string | null;
+  cronExpression: string;
 }
 
 export interface Page<T> {
@@ -123,6 +130,10 @@ export function searchJobs(params: JobSearchParams): Promise<Page<JobPosting>> {
 
 export function getJob(id: number | string): Promise<JobPosting> {
   return request<JobPosting>(`/api/v1/jobs/${id}`);
+}
+
+export function getIngestionStatus(): Promise<IngestionStatus> {
+  return request<IngestionStatus>("/api/v1/jobs/ingestion-status");
 }
 
 export function pasteJob(req: JobPasteRequest, token: string): Promise<JobPosting> {

@@ -2,6 +2,7 @@ package com.careercopilot.jobs;
 
 import com.careercopilot.auth.User;
 import com.careercopilot.auth.UserRepository;
+import com.careercopilot.jobs.dto.IngestionStatusResponse;
 import com.careercopilot.jobs.dto.JobPasteRequest;
 import com.careercopilot.jobs.dto.JobPostingResponse;
 import com.careercopilot.jobs.dto.JobSearchCriteria;
@@ -12,10 +13,15 @@ import com.careercopilot.jobs.source.NormalizedJob;
 import com.careercopilot.shared.BadRequestException;
 import com.careercopilot.shared.PageResponse;
 import com.careercopilot.shared.ResourceNotFoundException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,16 +35,19 @@ public class JobService {
   private final ManualPasteJobSource manualPasteJobSource;
   private final UserRepository userRepository;
   private final RoleProperties roleProperties;
+  private final String ingestionCron;
 
   public JobService(
       JobPostingRepository repository,
       ManualPasteJobSource manualPasteJobSource,
       UserRepository userRepository,
-      RoleProperties roleProperties) {
+      RoleProperties roleProperties,
+      @Value("${jobs.ingestion.cron:0 0 */12 * * *}") String ingestionCron) {
     this.repository = repository;
     this.manualPasteJobSource = manualPasteJobSource;
     this.userRepository = userRepository;
     this.roleProperties = roleProperties;
+    this.ingestionCron = ingestionCron;
   }
 
   @Transactional(readOnly = true)
@@ -78,6 +87,18 @@ public class JobService {
             .map(e -> new RolePresetResponse(e.getKey(), e.getValue().getLabel()))
             .toList();
     return new RolesResponse(presets);
+  }
+
+  /**
+   * Scraping cadence status: when scraping last actually completed (excludes manual pastes) and
+   * when the next scheduled run is due, computed live from the ingestion cron expression.
+   */
+  @Transactional(readOnly = true)
+  public IngestionStatusResponse ingestionStatus() {
+    Instant lastScrapedAt = repository.findLastScrapedAt(JobSource.MANUAL_PASTE).orElse(null);
+    Instant nextScrapedAt =
+        CronExpression.parse(ingestionCron).next(ZonedDateTime.now(ZoneOffset.UTC)).toInstant();
+    return new IngestionStatusResponse(lastScrapedAt, nextScrapedAt, ingestionCron);
   }
 
   /** Null/blank → no filter; a non-preset key → 400. */

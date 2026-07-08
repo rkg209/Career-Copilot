@@ -191,6 +191,52 @@ class JobIngestionServiceTest {
   }
 
   @Test
+  void ingestFrom_deactivatesPostingsMissingFromLatestFetch() {
+    JobSourceAdapter adapter =
+        stub(JobSource.GREENHOUSE, List.of(job(JobSource.GREENHOUSE, "still-open")));
+    when(repository.findBySourceAndExternalId(JobSource.GREENHOUSE, "still-open"))
+        .thenReturn(Optional.empty());
+    when(repository.deactivateMissingExternalIds(eq(JobSource.GREENHOUSE), any())).thenReturn(3);
+    JobIngestionService service =
+        new JobIngestionService(
+            List.of(adapter),
+            noAggregators,
+            repository,
+            passThroughFilter,
+            skillExtractor,
+            roleTagger,
+            roleProperties,
+            Set.of(JobSource.GREENHOUSE),
+            45);
+
+    service.ingestFrom(adapter);
+
+    ArgumentCaptor<Set<String>> seenIds = ArgumentCaptor.forClass(Set.class);
+    verify(repository).deactivateMissingExternalIds(eq(JobSource.GREENHOUSE), seenIds.capture());
+    assertThat(seenIds.getValue()).containsExactly("still-open");
+  }
+
+  @Test
+  void ingestFrom_skipsDeactivationSweepWhenFetchIsEmpty() {
+    JobSourceAdapter adapter = stub(JobSource.GREENHOUSE, List.of());
+    JobIngestionService service =
+        new JobIngestionService(
+            List.of(adapter),
+            noAggregators,
+            repository,
+            passThroughFilter,
+            skillExtractor,
+            roleTagger,
+            roleProperties,
+            Set.of(JobSource.GREENHOUSE),
+            45);
+
+    service.ingestFrom(adapter);
+
+    verify(repository, never()).deactivateMissingExternalIds(any(), any());
+  }
+
+  @Test
   void deactivateStale_callsRepositoryWithCutoff() {
     JobIngestionService service =
         new JobIngestionService(

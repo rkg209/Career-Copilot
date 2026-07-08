@@ -110,6 +110,10 @@ jobs:
     title-keywords: ${JOBS_TARGET_TITLE_KEYWORDS:machine learning,ml engineer,ai engineer,applied scientist,deep learning,llm,genai,software engineer,software development engineer,backend engineer,platform engineer,systems engineer,quantitative developer,quantitative researcher,quant,hft,trading systems}
     # Kept only if remote OR location matches a term below. Empty list = no location filter.
     location-terms: ${JOBS_TARGET_LOCATION_TERMS:india,bengaluru,bangalore,hyderabad,pune,delhi,gurgaon,gurugram,noida,mumbai,chennai,remote,singapore,japan,tokyo}
+    # A "remote" posting whose location names one of these countries/regions (and none of the
+    # location-terms above) is remote-but-restricted-to-that-country's-candidates, e.g. "Remote -
+    # USA" — not actually open to ours. Such postings are dropped instead of kept.
+    remote-restricted-terms: ${JOBS_TARGET_REMOTE_RESTRICTED_TERMS:usa,us,united states,canada,uk,united kingdom,brazil,israel,china,germany,france,sweden,argentina,ireland,denmark,australia,mexico,poland,spain,italy,netherlands}
     # Reserved for future ranking; not a hard filter in v1.
     experience-terms: ${JOBS_TARGET_EXPERIENCE_TERMS:intern,new grad,new-grad,graduate,entry level,entry-level,junior,associate}
   remoteok:

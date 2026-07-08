@@ -1,6 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { listJobs, searchJobs, type JobPosting, type Page } from "../api";
+import {
+  getIngestionStatus,
+  listJobs,
+  searchJobs,
+  type IngestionStatus,
+  type JobPosting,
+  type Page,
+} from "../api";
 import { AppLayout } from "../components/AppLayout";
 import {
   Alert,
@@ -20,6 +27,7 @@ export function JobsPage() {
   const [data, setData] = useState<Page<JobPosting> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [ingestionStatus, setIngestionStatus] = useState<IngestionStatus | null>(null);
 
   const [q, setQ] = useState("");
   const [location, setLocation] = useState("");
@@ -46,6 +54,12 @@ export function JobsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searching]);
 
+  useEffect(() => {
+    getIngestionStatus()
+      .then(setIngestionStatus)
+      .catch(() => setIngestionStatus(null));
+  }, []);
+
   function handleSearch(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -64,6 +78,19 @@ export function JobsPage() {
           </Link>
         }
       />
+
+      {ingestionStatus && (
+        <p className="mb-4 text-sm text-muted">
+          Last scraped{" "}
+          {ingestionStatus.lastScrapedAt
+            ? new Date(ingestionStatus.lastScrapedAt).toLocaleString()
+            : "— not yet run"}
+          {" · "}Next scrape{" "}
+          {ingestionStatus.nextScrapedAt
+            ? new Date(ingestionStatus.nextScrapedAt).toLocaleString()
+            : "unknown"}
+        </p>
+      )}
 
       <Card className="mb-6">
         <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -120,6 +147,11 @@ export function JobsPage() {
                   {job.company}
                   {job.location ? ` · ${job.location}` : ""}
                 </p>
+                {job.ingestedAt && (
+                  <p className="text-xs text-muted">
+                    Listed on our portal {new Date(job.ingestedAt).toLocaleDateString()}
+                  </p>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {job.remote && <Chip>Remote</Chip>}

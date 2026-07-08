@@ -1,5 +1,7 @@
 package com.careercopilot.jobs;
 
+import static java.util.stream.Collectors.toSet;
+
 import com.careercopilot.jobs.source.JobRelevanceFilter;
 import com.careercopilot.jobs.source.JobSourceAdapter;
 import com.careercopilot.jobs.source.NormalizedJob;
@@ -12,6 +14,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -152,17 +155,37 @@ public class JobIngestionService {
         updated++;
       }
     }
+    int deactivated = deactivateMissingFrom(adapter.id(), fetched);
     IngestionResult result =
         new IngestionResult(adapter.id(), fetched.size(), inserted, updated, filteredOut);
     log.info(
-        "Ingested source={} fetched={} kept={} filteredOut={} inserted={} updated={}",
+        "Ingested source={} fetched={} kept={} filteredOut={} inserted={} updated={} deactivated={}",
         result.source(),
         result.fetched(),
         result.kept(),
         result.filteredOut(),
         result.inserted(),
-        result.updated());
+        result.updated(),
+        deactivated);
     return result;
+  }
+
+  /**
+   * A whole-board fetch is exhaustive, so any active posting from this source not present in the
+   * latest fetch has disappeared upstream (closed/filled/removed) and is deactivated. Skipped
+   * entirely when the fetch returned nothing, since an empty list is ambiguous with a
+   * failed/short-circuited call and would otherwise wrongly deactivate the whole source.
+   */
+  private int deactivateMissingFrom(JobSource source, List<NormalizedJob> fetched) {
+    if (fetched.isEmpty()) {
+      return 0;
+    }
+    Set<String> seenExternalIds =
+        fetched.stream().map(NormalizedJob::externalId).filter(Objects::nonNull).collect(toSet());
+    if (seenExternalIds.isEmpty()) {
+      return 0;
+    }
+    return repository.deactivateMissingExternalIds(source, seenExternalIds);
   }
 
   /**

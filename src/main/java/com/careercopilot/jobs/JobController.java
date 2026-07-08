@@ -1,5 +1,6 @@
 package com.careercopilot.jobs;
 
+import com.careercopilot.jobs.dto.IngestionStatusResponse;
 import com.careercopilot.jobs.dto.JobPasteRequest;
 import com.careercopilot.jobs.dto.JobPostingResponse;
 import com.careercopilot.jobs.dto.JobSearchCriteria;
@@ -49,6 +50,11 @@ public class JobController {
   @GetMapping("/roles")
   public RolesResponse roles() {
     return jobService.roles();
+  }
+
+  @GetMapping("/ingestion-status")
+  public IngestionStatusResponse ingestionStatus() {
+    return jobService.ingestionStatus();
   }
 
   @GetMapping("/search")

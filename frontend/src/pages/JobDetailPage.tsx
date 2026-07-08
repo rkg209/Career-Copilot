@@ -132,6 +132,12 @@ export function JobDetailPage() {
         ))}
       </div>
 
+      {job.ingestedAt && (
+        <p className="mt-2 text-xs text-muted">
+          Listed on our portal {new Date(job.ingestedAt).toLocaleString()}
+        </p>
+      )}
+
       {job.responsibilities.length > 0 && (
         <Card className="mt-6">
           <h2 className="mb-2 text-lg font-semibold">Responsibilities</h2>

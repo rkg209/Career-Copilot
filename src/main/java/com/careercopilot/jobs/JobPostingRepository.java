@@ -2,6 +2,7 @@ package com.careercopilot.jobs;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,34 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
 
   /** Idempotent-ingestion lookup; MANUAL_PASTE rows (null externalId) are never matched here. */
   Optional<JobPosting> findBySourceAndExternalId(JobSource source, String externalId);
+
+  /**
+   * Most recent ingestion timestamp among scraped postings (excludes {@code excludedSource}, which
+   * isn't a scraping event and would otherwise skew "last scraped" toward whenever a user last
+   * pasted a job — pass {@code JobSource.MANUAL_PASTE}). Empty if scraping has never completed
+   * since this data existed. Uses a bind parameter rather than an inline enum literal: Hibernate
+   * renders a JPQL enum literal as a cast to the Java enum's simple name (e.g. {@code
+   * ::JobSource}), which doesn't match this DB's actual enum type name ({@code job_source}) and
+   * fails at runtime.
+   */
+  @Query("SELECT MAX(j.ingestedAt) FROM JobPosting j WHERE j.source <> :excludedSource")
+  Optional<Instant> findLastScrapedAt(@Param("excludedSource") JobSource excludedSource);
+
+  /**
+   * Disappearance-based closed detection: a whole-board adapter fetch is exhaustive, so any
+   * previously active posting from that source whose externalId is absent from the latest fetch is
+   * no longer listed upstream (closed/filled/removed) and is deactivated. Never called with an
+   * empty {@code seenExternalIds} — callers must skip the sweep when a fetch returns nothing, since
+   * an empty result is ambiguous with a failed/short-circuited call.
+   */
+  @Modifying
+  @Query(
+      "UPDATE JobPosting j SET j.active = false "
+          + "WHERE j.active = true AND j.source = :source AND j.externalId IS NOT NULL "
+          + "AND j.externalId NOT IN :seenExternalIds")
+  int deactivateMissingExternalIds(
+      @Param("source") JobSource source,
+      @Param("seenExternalIds") Collection<String> seenExternalIds);
 
   /**
    * Full-text + filter search over active postings. Every optional filter is guarded with an

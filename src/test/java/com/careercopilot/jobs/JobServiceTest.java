@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.careercopilot.auth.User;
 import com.careercopilot.auth.UserRepository;
+import com.careercopilot.jobs.dto.IngestionStatusResponse;
 import com.careercopilot.jobs.dto.JobPasteRequest;
 import com.careercopilot.jobs.dto.JobPostingResponse;
 import com.careercopilot.jobs.dto.JobSearchCriteria;
@@ -17,6 +18,7 @@ import com.careercopilot.jobs.source.ManualPasteJobSource;
 import com.careercopilot.shared.BadRequestException;
 import com.careercopilot.shared.PageResponse;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,8 +38,16 @@ class JobServiceTest {
   @Mock private UserRepository userRepository;
 
   private JobService service() {
+    return service("0 0 */12 * * *");
+  }
+
+  private JobService service(String ingestionCron) {
     return new JobService(
-        repository, new ManualPasteJobSource(), userRepository, new RoleProperties());
+        repository,
+        new ManualPasteJobSource(),
+        userRepository,
+        new RoleProperties(),
+        ingestionCron);
   }
 
   @Test
@@ -127,5 +137,27 @@ class JobServiceTest {
             isNull(),
             isNull(),
             any(Pageable.class));
+  }
+
+  @Test
+  void ingestionStatus_reportsLastScrapedAndCronExpression() {
+    Instant lastScraped = Instant.parse("2026-07-08T10:00:00Z");
+    when(repository.findLastScrapedAt(JobSource.MANUAL_PASTE)).thenReturn(Optional.of(lastScraped));
+
+    IngestionStatusResponse status = service("0 0 */12 * * *").ingestionStatus();
+
+    assertThat(status.lastScrapedAt()).isEqualTo(lastScraped);
+    assertThat(status.cronExpression()).isEqualTo("0 0 */12 * * *");
+    assertThat(status.nextScrapedAt()).isAfter(Instant.now());
+  }
+
+  @Test
+  void ingestionStatus_nullWhenScrapingNeverCompleted() {
+    when(repository.findLastScrapedAt(JobSource.MANUAL_PASTE)).thenReturn(Optional.empty());
+
+    IngestionStatusResponse status = service().ingestionStatus();
+
+    assertThat(status.lastScrapedAt()).isNull();
+    assertThat(status.nextScrapedAt()).isNotNull();
   }
 }

@@ -6,9 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Structured targeting config bound from {@code jobs.targets}. Drives {@code JobRelevanceFilter}:
  * only postings whose title matches a {@code titleKeywords} entry (and, when {@code locationTerms}
- * is non-empty, whose location matches or is remote) are ingested. {@code experienceTerms} is
- * reserved for future ranking and is not a hard filter in v1. All lists default to empty; empty
- * {@code titleKeywords} is a back-compat escape hatch that lets everything through.
+ * is non-empty, whose location matches, or is remote and not country-restricted away from an
+ * allowed location) are ingested. {@code experienceTerms} is reserved for future ranking and is not
+ * a hard filter in v1. All lists default to empty; empty {@code titleKeywords} is a back-compat
+ * escape hatch that lets everything through.
  */
 @ConfigurationProperties(prefix = "jobs.targets")
 public class JobTargetProperties {
@@ -16,6 +17,7 @@ public class JobTargetProperties {
   private List<String> titleKeywords = List.of();
   private List<String> locationTerms = List.of();
   private List<String> experienceTerms = List.of();
+  private List<String> remoteRestrictedTerms = List.of();
 
   public List<String> getTitleKeywords() {
     return titleKeywords;
@@ -39,5 +41,18 @@ public class JobTargetProperties {
 
   public void setExperienceTerms(List<String> experienceTerms) {
     this.experienceTerms = experienceTerms;
+  }
+
+  /**
+   * Country/region names that, when found in a remote posting's location text without any {@code
+   * locationTerms} entry also present, mark it as remote-but-restricted-elsewhere (e.g. "Remote -
+   * USA") rather than genuinely open to candidates in an allowed location.
+   */
+  public List<String> getRemoteRestrictedTerms() {
+    return remoteRestrictedTerms;
+  }
+
+  public void setRemoteRestrictedTerms(List<String> remoteRestrictedTerms) {
+    this.remoteRestrictedTerms = remoteRestrictedTerms;
   }
 }
