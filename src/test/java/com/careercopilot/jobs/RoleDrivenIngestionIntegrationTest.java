@@ -2,6 +2,7 @@ package com.careercopilot.jobs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.careercopilot.jobs.source.JobDescriptionEnricher;
 import com.careercopilot.jobs.source.JobRelevanceFilter;
 import com.careercopilot.jobs.source.JobSourceAdapter;
 import com.careercopilot.jobs.source.NormalizedJob;
@@ -31,7 +32,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
       "jobs.roles.ai-ml-engineer.label=AI / ML Engineer",
       "jobs.roles.ai-ml-engineer.keywords=machine learning",
       "jobs.roles.software-engineer.label=Software Engineer",
-      "jobs.roles.software-engineer.keywords=software engineer"
+      "jobs.roles.software-engineer.keywords=software engineer",
+      "jobs.enrichment.enabled=false"
     })
 class RoleDrivenIngestionIntegrationTest {
 
@@ -41,6 +43,7 @@ class RoleDrivenIngestionIntegrationTest {
   @Autowired private JobPostingRepository repository;
   @Autowired private JobRelevanceFilter relevanceFilter;
   @Autowired private SkillExtractor skillExtractor;
+  @Autowired private JobDescriptionEnricher disabledEnricher;
   @Autowired private RoleTagger roleTagger;
   @Autowired private RoleProperties roleProperties;
 
@@ -57,6 +60,7 @@ class RoleDrivenIngestionIntegrationTest {
         repository,
         relevanceFilter,
         skillExtractor,
+        disabledEnricher,
         roleTagger,
         roleProperties,
         Set.of(JobSource.JOOBLE, JobSource.GREENHOUSE),

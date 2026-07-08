@@ -12,6 +12,7 @@ import {
 import { GapReport } from "../components/GapReport";
 import { AppLayout } from "../components/AppLayout";
 import { Alert, Button, Card, Chip, PageHeader, Spinner } from "../components/ui";
+import { parseJobDescription } from "../lib/parseJobDescription";
 
 export function JobDetailPage() {
   const { id } = useParams();
@@ -151,7 +152,27 @@ export function JobDetailPage() {
 
       <Card className="mt-6">
         <h2 className="mb-2 text-lg font-semibold">Description</h2>
-        <pre className="whitespace-pre-wrap font-sans text-sm text-muted">{job.fullText}</pre>
+        <div className="space-y-5">
+          {parseJobDescription(job.fullText).map((section, i) => (
+            <div key={i}>
+              {section.heading && (
+                <h3 className="mb-1.5 text-sm font-semibold text-fg">{section.heading}</h3>
+              )}
+              {section.paragraphs.map((p, j) => (
+                <p key={j} className="whitespace-pre-wrap text-sm text-muted">
+                  {p}
+                </p>
+              ))}
+              {section.bullets.length > 0 && (
+                <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+                  {section.bullets.map((b, j) => (
+                    <li key={j}>{b}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
       </Card>
 
       {job.url && (

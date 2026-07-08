@@ -6,6 +6,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.careercopilot.jobs.source.AdzunaJobSource;
+import com.careercopilot.jobs.source.JobDescriptionEnricher;
 import com.careercopilot.jobs.source.JobRelevanceFilter;
 import com.careercopilot.jobs.source.RoleTagger;
 import com.careercopilot.jobs.source.SkillExtractor;
@@ -33,7 +34,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
     properties = {
       "jobs.search-locations=India",
       "jobs.roles.ai-ml-engineer.label=AI / ML Engineer",
-      "jobs.roles.ai-ml-engineer.keywords=machine learning,ai engineer"
+      "jobs.roles.ai-ml-engineer.keywords=machine learning,ai engineer",
+      "jobs.enrichment.enabled=false"
     })
 class AdzunaQueryIntegrationTest {
 
@@ -43,6 +45,7 @@ class AdzunaQueryIntegrationTest {
   @Autowired private JobPostingRepository repository;
   @Autowired private JobRelevanceFilter relevanceFilter;
   @Autowired private SkillExtractor skillExtractor;
+  @Autowired private JobDescriptionEnricher disabledEnricher;
   @Autowired private RoleTagger roleTagger;
   @Autowired private RoleProperties roleProperties;
 
@@ -78,6 +81,7 @@ class AdzunaQueryIntegrationTest {
             repository,
             relevanceFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.ADZUNA),

@@ -89,6 +89,12 @@ jobs:
     sweep-cron: ${JOBS_FRESHNESS_SWEEP_CRON:0 30 * * * *}
   adapters:
     enabled: ${JOBS_ADAPTERS_ENABLED:REMOTEOK,GREENHOUSE,LEVER,ASHBY,ADZUNA,JOOBLE}
+  # Best-effort fetch of the real description from a posting's URL when the source (Adzuna,
+  # Jooble) only returned a short search-result snippet.
+  enrichment:
+    enabled: ${JOBS_ENRICHMENT_ENABLED:true}
+    timeout-seconds: ${JOBS_ENRICHMENT_TIMEOUT_SECONDS:6}
+    max-length: ${JOBS_ENRICHMENT_MAX_LENGTH:8000}
   # Locations searched per role by the query-driven aggregators.
   search-locations: ${JOBS_SEARCH_LOCATIONS:India,Remote}
   # Curated role presets. key -> {label, keywords}. Keywords drive aggregator search AND role tagging.

@@ -2,6 +2,7 @@ package com.careercopilot.jobs;
 
 import static java.util.stream.Collectors.toSet;
 
+import com.careercopilot.jobs.source.JobDescriptionEnricher;
 import com.careercopilot.jobs.source.JobRelevanceFilter;
 import com.careercopilot.jobs.source.JobSourceAdapter;
 import com.careercopilot.jobs.source.NormalizedJob;
@@ -9,6 +10,7 @@ import com.careercopilot.jobs.source.QueryableJobSource;
 import com.careercopilot.jobs.source.RoleQuery;
 import com.careercopilot.jobs.source.RoleTagger;
 import com.careercopilot.jobs.source.SkillExtractor;
+import com.careercopilot.shared.HtmlTextSanitizer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,11 +39,19 @@ public class JobIngestionService {
 
   private static final Logger log = LoggerFactory.getLogger(JobIngestionService.class);
 
+  /**
+   * Below this length, an aggregator's {@code fullText} is reliably a search-result snippet, not a
+   * truncated-but-substantial description — worth spending a fetch on {@link
+   * JobDescriptionEnricher} to try to get the real thing.
+   */
+  private static final int SNIPPET_LENGTH_THRESHOLD = 700;
+
   private final List<JobSourceAdapter> adapters;
   private final List<QueryableJobSource> queryableSources;
   private final JobPostingRepository repository;
   private final JobRelevanceFilter relevanceFilter;
   private final SkillExtractor skillExtractor;
+  private final JobDescriptionEnricher descriptionEnricher;
   private final RoleTagger roleTagger;
   private final RoleProperties roleProperties;
   private final Set<JobSource> enabled;
@@ -53,6 +63,7 @@ public class JobIngestionService {
       JobPostingRepository repository,
       JobRelevanceFilter relevanceFilter,
       SkillExtractor skillExtractor,
+      JobDescriptionEnricher descriptionEnricher,
       RoleTagger roleTagger,
       RoleProperties roleProperties,
       @Value("${jobs.adapters.enabled:REMOTEOK}") Set<JobSource> enabled,
@@ -62,6 +73,7 @@ public class JobIngestionService {
     this.repository = repository;
     this.relevanceFilter = relevanceFilter;
     this.skillExtractor = skillExtractor;
+    this.descriptionEnricher = descriptionEnricher;
     this.roleTagger = roleTagger;
     this.roleProperties = roleProperties;
     this.enabled = enabled;
@@ -121,7 +133,7 @@ public class JobIngestionService {
     int inserted = 0;
     int updated = 0;
     for (NormalizedJob raw : results) {
-      if (upsert(enrichSkills(raw), roles) == UpsertOutcome.INSERTED) {
+      if (upsert(enrichSkills(enrichDescription(sanitize(raw))), roles) == UpsertOutcome.INSERTED) {
         inserted++;
       } else {
         updated++;
@@ -148,7 +160,7 @@ public class JobIngestionService {
         filteredOut++;
         continue;
       }
-      NormalizedJob n = enrichSkills(raw);
+      NormalizedJob n = enrichSkills(enrichDescription(sanitize(raw)));
       if (upsert(n, roleTagger.tag(n)) == UpsertOutcome.INSERTED) {
         inserted++;
       } else {
@@ -214,6 +226,47 @@ public class JobIngestionService {
     Set<String> merged = new LinkedHashSet<>(existing == null ? List.of() : existing);
     merged.addAll(add);
     return new ArrayList<>(merged);
+  }
+
+  /**
+   * Strips HTML tags/entities from source-provided free text (some ATS APIs, e.g. Greenhouse,
+   * return {@code content} as raw HTML). A no-op on already-clean text.
+   */
+  private NormalizedJob sanitize(NormalizedJob n) {
+    return new NormalizedJob(
+        n.source(),
+        n.externalId(),
+        HtmlTextSanitizer.toPlainText(n.title()),
+        HtmlTextSanitizer.toPlainText(n.company()),
+        n.location(),
+        n.remote(),
+        n.employmentType(),
+        n.salaryMin(),
+        n.salaryMax(),
+        n.salaryCurrency(),
+        n.skills(),
+        n.responsibilities(),
+        HtmlTextSanitizer.toPlainText(n.fullText()),
+        n.url(),
+        n.postedAt(),
+        n.expiresAt(),
+        n.pastedByUserId());
+  }
+
+  /**
+   * Best-effort replaces a snippet-length {@code fullText} with the real description fetched from
+   * the posting's original URL. A no-op when the text is already substantial, enrichment is
+   * disabled, or the fetch/extraction fails for any reason.
+   */
+  private NormalizedJob enrichDescription(NormalizedJob n) {
+    int existingLength = n.fullText() == null ? 0 : n.fullText().length();
+    if (existingLength >= SNIPPET_LENGTH_THRESHOLD) {
+      return n;
+    }
+    return descriptionEnricher
+        .fetchFullDescription(n.url(), existingLength)
+        .map(n::withFullText)
+        .orElse(n);
   }
 
   /** Populates skills from the description when the source provided none; otherwise unchanged. */

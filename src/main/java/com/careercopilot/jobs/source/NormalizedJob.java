@@ -50,4 +50,29 @@ public record NormalizedJob(
         expiresAt,
         pastedByUserId);
   }
+
+  /**
+   * Returns a copy with the full text replaced — used when {@link JobDescriptionEnricher} fetches a
+   * fuller description than an aggregator's search-result snippet.
+   */
+  public NormalizedJob withFullText(String newFullText) {
+    return new NormalizedJob(
+        source,
+        externalId,
+        title,
+        company,
+        location,
+        remote,
+        employmentType,
+        salaryMin,
+        salaryMax,
+        salaryCurrency,
+        skills,
+        responsibilities,
+        newFullText,
+        url,
+        postedAt,
+        expiresAt,
+        pastedByUserId);
+  }
 }

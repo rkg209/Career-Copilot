@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.careercopilot.jobs.source.JobDescriptionEnricher;
 import com.careercopilot.jobs.source.JobRelevanceFilter;
 import com.careercopilot.jobs.source.JobSourceAdapter;
 import com.careercopilot.jobs.source.NormalizedJob;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.RestClient;
 
 @ExtendWith(MockitoExtension.class)
 class JobIngestionServiceTest {
@@ -36,6 +38,8 @@ class JobIngestionServiceTest {
   private final JobRelevanceFilter passThroughFilter =
       new JobRelevanceFilter(new JobTargetProperties());
   private final SkillExtractor skillExtractor = new SkillExtractor(new SkillAliasMap());
+  private final JobDescriptionEnricher disabledEnricher =
+      new JobDescriptionEnricher(RestClient.builder(), false, 6, 8000);
   // Empty role config → no aggregators queried, whole-board rows tagged with no roles.
   private final RoleProperties roleProperties = new RoleProperties();
   private final RoleTagger roleTagger = new RoleTagger(roleProperties);
@@ -90,6 +94,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.REMOTEOK),
@@ -118,6 +123,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.REMOTEOK, JobSource.ADZUNA),
@@ -145,6 +151,7 @@ class JobIngestionServiceTest {
             repository,
             filterFor(List.of("software engineer")),
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.GREENHOUSE),
@@ -175,6 +182,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.GREENHOUSE),
@@ -204,6 +212,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.GREENHOUSE),
@@ -226,6 +235,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.GREENHOUSE),
@@ -245,6 +255,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(),
@@ -271,6 +282,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             roleTagger,
             roleProperties,
             Set.of(JobSource.REMOTEOK),
@@ -315,6 +327,7 @@ class JobIngestionServiceTest {
             repository,
             passThroughFilter,
             skillExtractor,
+            disabledEnricher,
             new RoleTagger(props),
             props,
             Set.of(JobSource.ADZUNA),
