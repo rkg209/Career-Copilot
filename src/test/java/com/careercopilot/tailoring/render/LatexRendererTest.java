@@ -39,12 +39,48 @@ class LatexRendererTest {
                          "At Globex I built pipelines with 99.9% uptime."],
        "closing":"Sincerely,"}""";
 
+  private static final String FULL_SECTIONS_PAYLOAD =
+      """
+      {"candidateName":"Jane Doe",
+       "contactInfo":{"email":"jane@example.com","location":"Mumbai"},
+       "summary":"Final-year student with projects & internships.",
+       "education":[
+         {"degree":"B.Tech. (CSE)","institution":"IIT Bombay","yearRange":"2022 -- 2026","score":"CPI 9.2"},
+         {"degree":"Class XII","institution":"SMP School","university":"CBSE","yearRange":"2021","score":"94.2%"}],
+       "experience":[
+         {"sourceEntryId":1,"title":"SWE Intern","company":"Qualcomm",
+          "startDate":"May 2025","endDate":"Jul 2025","bullets":["Automated checks 10x"]}],
+       "projects":[
+         {"sourceEntryId":2,"name":"Quadcopter #control","context":"Inter-IIT 2024",
+          "guide":"Prof. Vachhani","startDate":"Oct 2024","endDate":"Dec 2024",
+          "bullets":["Won Silver with 99% uptime & {braces}"]}],
+       "positionsOfResponsibility":[
+         {"sourceEntryId":3,"name":"Team Lead","context":"Mars Rover Team",
+          "startDate":"May 2024","endDate":"Present","bullets":["Led 40+ members"]}],
+       "skills":["Java","Python"],
+       "skillGroups":[
+         {"name":"Languages","skillsJoined":"C++, Python, Java"},
+         {"name":"Tools","skillsJoined":"Docker, Git"}],
+       "achievements":[{"text":"JEE 97.4 %ile","yearLabel":"2022"}],
+       "certifications":[{"text":"AWS SAA (Amazon)","yearLabel":"2023"}],
+       "courseworkJoined":"OS, DBMS, ML"}""";
+
   @Test
   void render_allResumeTemplates_produceValidPdfs() {
     assumeTrue(renderer.isAvailable(), "tectonic binary not installed");
     for (TemplateRegistry.Template template : registry.list(TemplateRegistry.Kind.RESUME)) {
       byte[] pdf = renderer.render(template, RESUME_PAYLOAD);
       assertThat(pdf).as("PDF for template %s", template.id()).isNotEmpty();
+      assertThat(new String(pdf, 0, 5)).as("PDF magic for %s", template.id()).isEqualTo("%PDF-");
+    }
+  }
+
+  @Test
+  void render_allResumeTemplates_withAllNewSections_produceValidPdfs() {
+    assumeTrue(renderer.isAvailable(), "tectonic binary not installed");
+    for (TemplateRegistry.Template template : registry.list(TemplateRegistry.Kind.RESUME)) {
+      byte[] pdf = renderer.render(template, FULL_SECTIONS_PAYLOAD);
+      assertThat(pdf).as("full-sections PDF for %s", template.id()).isNotEmpty();
       assertThat(new String(pdf, 0, 5)).as("PDF magic for %s", template.id()).isEqualTo("%PDF-");
     }
   }

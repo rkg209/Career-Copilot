@@ -15,7 +15,14 @@ final class ExperienceText {
 
   static String build(ExperienceEntry entry) {
     StringBuilder sb = new StringBuilder();
+    sb.append('[').append(typeLabel(entry)).append("] ");
     sb.append(entry.getRole()).append(" at ").append(entry.getCompany());
+    if (entry.getContext() != null && !entry.getContext().isBlank()) {
+      sb.append(" (").append(entry.getContext()).append(')');
+    }
+    if (entry.getGuide() != null && !entry.getGuide().isBlank()) {
+      sb.append("\nGuide: ").append(entry.getGuide());
+    }
     if (entry.getDescription() != null && !entry.getDescription().isBlank()) {
       sb.append("\n").append(entry.getDescription());
     }
@@ -26,6 +33,15 @@ final class ExperienceText {
       sb.append("\nSkills: ").append(String.join(", ", entry.getSkillsUsed()));
     }
     return sb.toString();
+  }
+
+  private static String typeLabel(ExperienceEntry entry) {
+    CorpusEntryType type =
+        entry.getEntryType() != null ? entry.getEntryType() : CorpusEntryType.WORK;
+    if (type == CorpusEntryType.PROJECT && entry.getProjectType() != null) {
+      return entry.getProjectType() + " PROJECT";
+    }
+    return type.name().replace('_', ' ');
   }
 
   static String sha256(String text) {

@@ -14,4 +14,6 @@ public record ProfileDto(
     String portfolioUrl,
     List<String> targetRoles,
     List<String> targetLocations,
-    Boolean openToRemote) {}
+    Boolean openToRemote,
+    List<String> coursework,
+    List<String> areasOfInterest) {}

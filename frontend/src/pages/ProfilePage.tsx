@@ -7,11 +7,16 @@ import {
   listExperience,
   putProfile,
   updateExperience,
+  type CorpusEntryType,
   type Experience,
   type ExperienceRequest,
   type Profile,
+  type ProjectType,
 } from "../api";
 import { AppLayout } from "../components/AppLayout";
+import { EducationSection } from "../components/profile/EducationSection";
+import { HighlightsSection } from "../components/profile/HighlightsSection";
+import { SkillGroupsSection } from "../components/profile/SkillGroupsSection";
 import {
   Alert,
   Badge,
@@ -21,8 +26,17 @@ import {
   Field,
   Input,
   PageHeader,
+  Select,
   Textarea,
 } from "../components/ui";
+
+const ENTRY_TYPE_LABELS: Record<CorpusEntryType, string> = {
+  WORK: "Work experience",
+  INTERNSHIP: "Internship",
+  PROJECT: "Project",
+  POSITION_OF_RESPONSIBILITY: "Position of responsibility",
+  PUBLICATION: "Publication",
+};
 
 const emptyForm: ExperienceRequest = {
   role: "",
@@ -34,6 +48,10 @@ const emptyForm: ExperienceRequest = {
   description: "",
   achievements: [],
   skillsUsed: [],
+  entryType: "WORK",
+  guide: "",
+  context: "",
+  url: "",
 };
 
 export function ProfilePage() {
@@ -45,6 +63,8 @@ export function ProfilePage() {
   const [form, setForm] = useState<ExperienceRequest>(emptyForm);
   const [achievementsText, setAchievementsText] = useState("");
   const [skillsText, setSkillsText] = useState("");
+  const [courseworkText, setCourseworkText] = useState("");
+  const [interestsText, setInterestsText] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +76,8 @@ export function ProfilePage() {
         setProfile(p);
         setTargetRolesText(p.targetRoles.join(", "));
         setTargetLocationsText(p.targetLocations.join(", "));
+        setCourseworkText(p.coursework.join(", "));
+        setInterestsText(p.areasOfInterest.join(", "));
       })
       .catch(() => setError("Could not load profile."));
     refreshEntries(token);
@@ -89,6 +111,8 @@ export function ProfilePage() {
           ...profile,
           targetRoles: splitList(targetRolesText),
           targetLocations: splitList(targetLocationsText),
+          coursework: splitList(courseworkText),
+          areasOfInterest: splitList(interestsText),
         },
         token!,
       );
@@ -110,6 +134,10 @@ export function ProfilePage() {
       description: form.description || undefined,
       achievements: splitList(achievementsText),
       skillsUsed: splitList(skillsText),
+      projectType: form.entryType === "PROJECT" ? form.projectType : undefined,
+      guide: form.guide || undefined,
+      context: form.context || undefined,
+      url: form.url || undefined,
     };
     try {
       if (editingId === null) {
@@ -137,6 +165,11 @@ export function ProfilePage() {
       endDate: entry.endDate ?? "",
       isCurrent: entry.isCurrent,
       description: entry.description ?? "",
+      entryType: entry.entryType,
+      projectType: entry.projectType ?? undefined,
+      guide: entry.guide ?? "",
+      context: entry.context ?? "",
+      url: entry.url ?? "",
     });
     setAchievementsText(entry.achievements.join(", "));
     setSkillsText(entry.skillsUsed.join(", "));
@@ -198,6 +231,12 @@ export function ProfilePage() {
               <Field label="Target locations" hint="Comma-separated">
                 <Input value={targetLocationsText} onChange={(e) => setTargetLocationsText(e.target.value)} />
               </Field>
+              <Field label="Key coursework" hint="Comma-separated — appears on your resume">
+                <Input placeholder="Data Structures, Operating Systems" value={courseworkText} onChange={(e) => setCourseworkText(e.target.value)} />
+              </Field>
+              <Field label="Areas of interest" hint="Comma-separated">
+                <Input placeholder="Distributed Systems, ML" value={interestsText} onChange={(e) => setInterestsText(e.target.value)} />
+              </Field>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -217,20 +256,71 @@ export function ProfilePage() {
         </Card>
       )}
 
+      <EducationSection token={token} onError={setError} />
+
       <Card className="mb-6">
-        <h2 className="mb-4 text-lg font-semibold">
-          {editingId === null ? "Add experience" : "Edit experience"}
+        <h2 className="mb-1 text-lg font-semibold">
+          {editingId === null ? "Add corpus entry" : "Edit corpus entry"}
         </h2>
+        <p className="mb-4 text-sm text-muted">
+          Work, internships, projects, positions of responsibility, publications — the evidence
+          pool that resume tailoring selects from.
+        </p>
         <form onSubmit={handleExperienceSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Role">
+            <Field label="Entry type">
+              <Select
+                value={form.entryType ?? "WORK"}
+                onChange={(e) =>
+                  setForm({ ...form, entryType: e.target.value as CorpusEntryType })
+                }
+              >
+                {Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {form.entryType === "PROJECT" && (
+              <Field label="Project type">
+                <Select
+                  value={form.projectType ?? ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      projectType: (e.target.value || undefined) as ProjectType | undefined,
+                    })
+                  }
+                >
+                  <option value="">Unspecified</option>
+                  <option value="COURSE">Course project</option>
+                  <option value="SELF">Self project</option>
+                  <option value="RESEARCH">Research project</option>
+                  <option value="THESIS">Thesis</option>
+                </Select>
+              </Field>
+            )}
+            <Field label={form.entryType === "PROJECT" || form.entryType === "PUBLICATION" ? "Title" : "Role / title"}>
               <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} required />
             </Field>
-            <Field label="Company">
+            <Field
+              label="Organization"
+              hint={form.entryType === "PROJECT" ? 'Company, team, or "Self Project"' : undefined}
+            >
               <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required />
             </Field>
             <Field label="Location" hint="Optional">
               <Input value={form.location ?? ""} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            </Field>
+            <Field label="Guide / mentor" hint="Optional, e.g. a professor">
+              <Input placeholder="Prof. Leena Vachhani" value={form.guide ?? ""} onChange={(e) => setForm({ ...form, guide: e.target.value })} />
+            </Field>
+            <Field label="Context" hint="Course code, club, competition…">
+              <Input placeholder="Inter-IIT Tech Meet 2024" value={form.context ?? ""} onChange={(e) => setForm({ ...form, context: e.target.value })} />
+            </Field>
+            <Field label="URL" hint="Repo / DOI / demo link">
+              <Input value={form.url ?? ""} onChange={(e) => setForm({ ...form, url: e.target.value })} />
             </Field>
             <Field label="Start date">
               <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} required />
@@ -266,7 +356,7 @@ export function ProfilePage() {
           </div>
           <div className="flex gap-2">
             <Button type="submit" variant="primary">
-              {editingId === null ? "Add experience" : "Save changes"}
+              {editingId === null ? "Add entry" : "Save changes"}
             </Button>
             {editingId !== null && (
               <Button
@@ -285,20 +375,24 @@ export function ProfilePage() {
         </form>
       </Card>
 
-      <h2 className="mb-3 text-lg font-semibold">Experience entries</h2>
+      <h2 className="mb-3 text-lg font-semibold">Corpus entries</h2>
       {entries.length === 0 ? (
-        <EmptyState title="No experience entries yet" description="Add your first one above — these power resume tailoring." />
+        <EmptyState title="No corpus entries yet" description="Add your first one above — these power resume tailoring." />
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="mb-6 flex flex-col gap-3">
           {entries.map((entry) => (
             <Card key={entry.id}>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold">
-                    {entry.role} <span className="font-normal text-muted">at {entry.company}</span>
+                    {entry.role} <span className="font-normal text-muted">· {entry.company}</span>
                   </p>
                   <p className="text-sm text-muted">
+                    {ENTRY_TYPE_LABELS[entry.entryType]}
+                    {entry.projectType && ` (${entry.projectType.toLowerCase()})`}
+                    {" · "}
                     {entry.startDate} – {entry.isCurrent ? "present" : (entry.endDate ?? "?")}
+                    {entry.guide && ` · Guide: ${entry.guide}`}
                   </p>
                 </div>
                 <Badge tone={entry.embeddingStatus === "EMBEDDED" ? "success" : "warning"}>
@@ -318,6 +412,11 @@ export function ProfilePage() {
           ))}
         </div>
       )}
+
+      <SkillGroupsSection token={token} onError={setError} onSaved={setMessage} />
+      <HighlightsSection token={token} type="SCHOLASTIC_ACHIEVEMENT" onError={setError} />
+      <HighlightsSection token={token} type="CERTIFICATION" onError={setError} />
+      <HighlightsSection token={token} type="EXTRACURRICULAR" onError={setError} />
     </AppLayout>
   );
 }

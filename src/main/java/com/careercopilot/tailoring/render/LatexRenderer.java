@@ -92,6 +92,21 @@ public class LatexRenderer {
       List<String> parts = skills.stream().map(String::valueOf).toList();
       context.put("skillsJoined", String.join(" \\textbullet{} ", parts));
     }
+    // Section presence flags so templates render a section header only when it has content.
+    for (String section :
+        List.of(
+            "experience",
+            "projects",
+            "positionsOfResponsibility",
+            "education",
+            "skillGroups",
+            "achievements",
+            "certifications")) {
+      if (context.get(section) instanceof List<?> items && !items.isEmpty()) {
+        String flag = "has" + Character.toUpperCase(section.charAt(0)) + section.substring(1);
+        context.put(flag, true);
+      }
+    }
     try (InputStream in = LatexRenderer.class.getResourceAsStream(template.resourcePath())) {
       if (in == null) {
         throw new RenderFailedException("Template resource missing: " + template.resourcePath());

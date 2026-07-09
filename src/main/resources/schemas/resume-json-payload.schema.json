@@ -39,11 +39,61 @@
         "additionalProperties": false
       }
     },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceEntryId": { "type": "integer" },
+          "name": { "type": "string", "minLength": 1 },
+          "context": { "type": "string" },
+          "guide": { "type": "string" },
+          "startDate": { "type": "string" },
+          "endDate": { "type": "string" },
+          "bullets": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": { "type": "string", "minLength": 1, "maxLength": 220 }
+          }
+        },
+        "required": ["sourceEntryId", "name", "bullets"],
+        "additionalProperties": false
+      }
+    },
+    "positionsOfResponsibility": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceEntryId": { "type": "integer" },
+          "name": { "type": "string", "minLength": 1 },
+          "context": { "type": "string" },
+          "startDate": { "type": "string" },
+          "endDate": { "type": "string" },
+          "bullets": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": { "type": "string", "minLength": 1, "maxLength": 220 }
+          }
+        },
+        "required": ["sourceEntryId", "name", "bullets"],
+        "additionalProperties": false
+      }
+    },
     "skills": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 }
     }
   },
-  "required": ["candidateName", "experience", "skills"],
+  "required": ["candidateName", "skills"],
+  "anyOf": [
+    { "required": ["experience"] },
+    { "required": ["projects"] },
+    { "required": ["positionsOfResponsibility"] }
+  ],
   "additionalProperties": false
 }

@@ -30,6 +30,16 @@
 {{summary}}
 {{/summary}}
 
+{{#hasEducation}}
+\section{Education}
+{{#education}}
+\noindent\textbf{ {{degree}} }\\
+\textit{ {{institution}} }{{#yearRange}} \hfill {{yearRange}}{{/yearRange}}{{#score}}\\ {{score}}{{/score}}\par
+\vspace{3pt}
+{{/education}}
+{{/hasEducation}}
+
+{{#hasExperience}}
 \section{Experience}
 {{#experience}}
 \noindent\textbf{ {{title}} }\\
@@ -41,15 +51,79 @@
 \end{itemize}
 \vspace{4pt}
 {{/experience}}
+{{/hasExperience}}
+
+{{#hasProjects}}
+\section{Projects}
+{{#projects}}
+\noindent\textbf{ {{name}} }{{#startDate}} \hfill {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}{{/startDate}}\\
+{{#context}}\textit{ {{context}} }{{/context}}{{#guide}} \textbar{} Guide: {{guide}}{{/guide}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/projects}}
+{{/hasProjects}}
+
+{{#hasPositionsOfResponsibility}}
+\section{Positions of Responsibility}
+{{#positionsOfResponsibility}}
+\noindent\textbf{ {{name}} }{{#startDate}} \hfill {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}{{/startDate}}\\
+{{#context}}\textit{ {{context}} }{{/context}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/positionsOfResponsibility}}
+{{/hasPositionsOfResponsibility}}
 
 \switchcolumn
 
+{{#hasSkillGroups}}
+\section{Skills}
+{{#skillGroups}}
+\noindent\textbf{ {{name}} }\\
+{{skillsJoined}}
+\vspace{4pt}\\
+{{/skillGroups}}
+{{/hasSkillGroups}}
+{{^hasSkillGroups}}
+{{#skillsJoined}}
 \section{Skills}
 \begin{itemize}
 {{#skills}}
   \item {{.}}
 {{/skills}}
 \end{itemize}
+{{/skillsJoined}}
+{{/hasSkillGroups}}
+
+{{#hasAchievements}}
+\section{Achievements}
+\begin{itemize}
+{{#achievements}}
+  \item {{text}}{{#yearLabel}} ({{yearLabel}}){{/yearLabel}}
+{{/achievements}}
+\end{itemize}
+{{/hasAchievements}}
+
+{{#hasCertifications}}
+\section{Certifications}
+\begin{itemize}
+{{#certifications}}
+  \item {{text}}{{#yearLabel}} ({{yearLabel}}){{/yearLabel}}
+{{/certifications}}
+\end{itemize}
+{{/hasCertifications}}
+
+{{#courseworkJoined}}
+\section{Coursework}
+{{courseworkJoined}}
+{{/courseworkJoined}}
 
 \end{paracol}
 

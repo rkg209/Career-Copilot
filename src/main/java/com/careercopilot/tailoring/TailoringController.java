@@ -85,7 +85,10 @@ public class TailoringController {
     return Stream.concat(
             templateRegistry.list(TemplateRegistry.Kind.RESUME).stream(),
             templateRegistry.list(TemplateRegistry.Kind.COVER_LETTER).stream())
-        .map(t -> new TemplateResponse(t.id(), t.displayName(), t.kind().name()))
+        .map(
+            t ->
+                new TemplateResponse(
+                    t.id(), t.displayName(), t.kind().name(), t.previewImagePath()))
         .toList();
   }
 

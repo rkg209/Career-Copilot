@@ -22,10 +22,15 @@ final class TailoringPrompts {
   static final String RESUME_SYSTEM_PROMPT =
       """
       You produce ONLY structured resume JSON matching the provided schema. You may use ONLY the \
-      supplied experience entries verbatim in substance; never invent employers, titles, dates, \
-      metrics, or skills. Every experience item must carry the sourceEntryId of the entry it came \
-      from, and its company must match that entry exactly. No LaTeX, no markdown, no prose \
-      outside JSON.""";
+      supplied corpus entries verbatim in substance; never invent employers, titles, dates, \
+      metrics, or skills. Entries are labeled with their type. Route each selected entry into the \
+      matching output array: WORK/INTERNSHIP entries into experience[], PROJECT/PUBLICATION \
+      entries into projects[], POSITION OF RESPONSIBILITY entries into \
+      positionsOfResponsibility[]. Every item must carry the sourceEntryId of the entry it came \
+      from; an experience item's company must exactly match its source entry's organization. Write 2-4 concise, \
+      quantified, action-verb bullets per item. Do NOT emit education, skill groups, \
+      certifications, or achievements — those are attached by the system. No LaTeX, no markdown, \
+      no prose outside JSON.""";
 
   static final String COVER_LETTER_SYSTEM_PROMPT =
       """
@@ -47,16 +52,24 @@ final class TailoringPrompts {
         Target job: title=%s, company=%s
         %s
 
-        Candidate experience (the ONLY allowed source; reference entries by id):
+        Candidate corpus entries (the ONLY allowed source; reference entries by id):
         %s
 
         Return JSON conforming to the ResumeJsonPayload schema:
-        - experience[].sourceEntryId = the id of the source entry
+        - route each item by its [TYPE] label: WORK/INTERNSHIP -> experience[], \
+        PROJECT/PUBLICATION -> projects[], POSITION OF RESPONSIBILITY -> \
+        positionsOfResponsibility[]
+        - every item carries sourceEntryId = the id of the source entry
         - experience[].title/company/startDate/endDate copied from the source entry \
         (dates as "MMM yyyy", endDate "Present" for current roles)
+        - projects[].name = the entry's title; copy context/guide/dates from the entry \
+        when present
+        - positionsOfResponsibility[].name = the entry's title, context = its organization
         - bullets rephrase the entry's description/achievements for relevance to the target job
         - skills only from the entries' skills, ordered by relevance to the job
-        - Do NOT include contactInfo (it is added later)
+        - omit any of experience/projects/positionsOfResponsibility entirely when no entry \
+        of that type is relevant (never emit an empty array)
+        - Do NOT include contactInfo, education, or certifications (added later)
         """
         .formatted(
             candidateName,
@@ -111,8 +124,17 @@ final class TailoringPrompts {
     StringBuilder sb = new StringBuilder();
     for (ExperienceEntry e : entries) {
       sb.append("- id=").append(e.getId());
-      sb.append(" | role=").append(e.getRole());
-      sb.append(" | company=").append(e.getCompany());
+      sb.append(" [")
+          .append(e.getEntryType() != null ? e.getEntryType().name().replace('_', ' ') : "WORK")
+          .append(']');
+      sb.append(" | title=").append(e.getRole());
+      sb.append(" | organization=").append(e.getCompany());
+      if (e.getContext() != null && !e.getContext().isBlank()) {
+        sb.append(" | context=").append(e.getContext());
+      }
+      if (e.getGuide() != null && !e.getGuide().isBlank()) {
+        sb.append(" | guide=").append(e.getGuide());
+      }
       sb.append(" | ").append(e.getStartDate().format(MONTH_YEAR));
       sb.append(" - ")
           .append(

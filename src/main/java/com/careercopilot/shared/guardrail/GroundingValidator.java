@@ -24,36 +24,57 @@ public class GroundingValidator {
   }
 
   /**
-   * Throws {@link GroundingException} when any {@code experience[]} item references an unknown
-   * {@code sourceEntryId} or contradicts the source entry's employer.
+   * Throws {@link GroundingException} when any {@code experience[]}, {@code projects[]}, or {@code
+   * positionsOfResponsibility[]} item references an unknown {@code sourceEntryId}, or when an
+   * experience item contradicts the source entry's employer.
    */
   public void validate(JsonNode payload, GroundingContext context) {
-    JsonNode experience = payload.path("experience");
-    if (!experience.isArray()) {
-      return;
-    }
     List<String> violations = new ArrayList<>();
-    for (JsonNode item : experience) {
-      long sourceEntryId = item.path("sourceEntryId").asLong(-1);
-      GroundingContext.Source source = context.allowedSources().get(sourceEntryId);
-      if (source == null) {
-        violations.add("Unknown sourceEntryId " + sourceEntryId);
-        continue;
+    JsonNode experience = payload.path("experience");
+    if (experience.isArray()) {
+      for (JsonNode item : experience) {
+        GroundingContext.Source source = knownSource(item, "experience", context, violations);
+        if (source == null) {
+          continue;
+        }
+        String company = item.path("company").asText("");
+        if (!company.equalsIgnoreCase(source.company())) {
+          violations.add(
+              "sourceEntryId "
+                  + item.path("sourceEntryId").asLong(-1)
+                  + " company mismatch: \""
+                  + company
+                  + "\"");
+        }
+        String title = item.path("title").asText("");
+        if (!title.equalsIgnoreCase(source.role())) {
+          // Titles may be legitimately rephrased; log for observability, don't reject.
+          log.debug(
+              "Grounding note: title \"{}\" differs from source role \"{}\"", title, source.role());
+        }
       }
-      String company = item.path("company").asText("");
-      if (!company.equalsIgnoreCase(source.company())) {
-        violations.add("sourceEntryId " + sourceEntryId + " company mismatch: \"" + company + "\"");
-      }
-      String title = item.path("title").asText("");
-      if (!title.equalsIgnoreCase(source.role())) {
-        // Titles may be legitimately rephrased; log for observability, don't reject.
-        log.debug(
-            "Grounding note: title \"{}\" differs from source role \"{}\"", title, source.role());
+    }
+    for (String section : List.of("projects", "positionsOfResponsibility")) {
+      JsonNode items = payload.path(section);
+      if (items.isArray()) {
+        for (JsonNode item : items) {
+          knownSource(item, section, context, violations);
+        }
       }
     }
     if (!violations.isEmpty()) {
       log.warn("Grounding validation failed: {} violation(s)", violations.size());
       throw new GroundingException(violations);
     }
+  }
+
+  private static GroundingContext.Source knownSource(
+      JsonNode item, String section, GroundingContext context, List<String> violations) {
+    long sourceEntryId = item.path("sourceEntryId").asLong(-1);
+    GroundingContext.Source source = context.allowedSources().get(sourceEntryId);
+    if (source == null) {
+      violations.add("Unknown sourceEntryId " + sourceEntryId + " in " + section);
+    }
+    return source;
   }
 }

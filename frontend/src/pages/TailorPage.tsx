@@ -41,6 +41,7 @@ export function TailorPage() {
   }
 
   const jobId = Number(id);
+  const selectedTemplate = templates.find((t) => t.id === templateId);
 
   async function onTailor() {
     setBusy("Tailoring your resume — this can take up to a minute…");
@@ -91,28 +92,44 @@ export function TailorPage() {
 
       <Card className="mb-6">
         <h2 className="mb-4 text-lg font-semibold">1 · Pick a template</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {templates.map((t) => {
-            const selected = templateId === t.id;
-            return (
-              <label
-                key={t.id}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors duration-150 ${
-                  selected ? "border-accent bg-accent-soft" : "hover:border-accent"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="template"
-                  value={t.id}
-                  checked={selected}
-                  onChange={() => setTemplateId(t.id)}
-                  className="h-4 w-4 accent-[var(--color-accent)]"
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="grid flex-1 grid-cols-1 gap-3 content-start sm:grid-cols-2">
+            {templates.map((t) => {
+              const selected = templateId === t.id;
+              return (
+                <label
+                  key={t.id}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors duration-150 ${
+                    selected ? "border-accent bg-accent-soft" : "hover:border-accent"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="template"
+                    value={t.id}
+                    checked={selected}
+                    onChange={() => setTemplateId(t.id)}
+                    className="h-4 w-4 accent-[var(--color-accent)]"
+                  />
+                  {t.displayName}
+                </label>
+              );
+            })}
+          </div>
+          {selectedTemplate?.previewImagePath && (
+            <div className="lg:w-64 lg:shrink-0">
+              <div className="lg:sticky lg:top-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+                  Preview
+                </p>
+                <img
+                  src={selectedTemplate.previewImagePath}
+                  alt={`${selectedTemplate.displayName} template preview`}
+                  className="w-full rounded-lg border border-line shadow-sm"
                 />
-                {t.displayName}
-              </label>
-            );
-          })}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

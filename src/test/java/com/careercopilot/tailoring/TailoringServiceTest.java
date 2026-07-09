@@ -42,6 +42,7 @@ class TailoringServiceTest {
   private LlmGateway llmGateway;
   private LatexRenderer latexRenderer;
   private ResumeVersionRepository resumeVersionRepository;
+  private ResumeSectionAssembler sectionAssembler;
   private TailoringService service;
 
   private final ObjectMapper mapper = new ObjectMapper();
@@ -56,6 +57,7 @@ class TailoringServiceTest {
     llmGateway = mock(LlmGateway.class);
     latexRenderer = mock(LatexRenderer.class);
     resumeVersionRepository = mock(ResumeVersionRepository.class);
+    sectionAssembler = mock(ResumeSectionAssembler.class);
     service =
         new TailoringService(
             userRepository,
@@ -68,6 +70,7 @@ class TailoringServiceTest {
             new TemplateRegistry(),
             latexRenderer,
             resumeVersionRepository,
+            sectionAssembler,
             mapper,
             6);
   }

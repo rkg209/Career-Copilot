@@ -18,11 +18,20 @@
   {{/contactInfo}}
 \end{center}
 
+{{#hasEducation}}
+\section{Education}
+{{#education}}
+\noindent {{#yearRange}}{{yearRange}} \quad {{/yearRange}}\textbf{ {{degree}} }, {{institution}}{{#university}}, {{university}}{{/university}}{{#score}} \hfill {{score}}{{/score}}\par
+\vspace{3pt}
+{{/education}}
+{{/hasEducation}}
+
 {{#summary}}
 \section{Research Interests \& Summary}
 {{summary}}
 {{/summary}}
 
+{{#hasExperience}}
 \section{Appointments \& Experience}
 {{#experience}}
 \noindent {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}} \quad \textbf{ {{title}} }, {{company}}{{#location}}, {{location}}{{/location}}
@@ -33,10 +42,71 @@
 \end{itemize}
 \vspace{4pt}
 {{/experience}}
+{{/hasExperience}}
 
+{{#hasProjects}}
+\section{Research \& Projects}
+{{#projects}}
+\noindent {{#startDate}}{{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}} \quad {{/startDate}}\textbf{ {{name}} }{{#context}}, {{context}}{{/context}}
+{{#guide}}\\ \textit{Guide: {{guide}} }{{/guide}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/projects}}
+{{/hasProjects}}
+
+{{#hasPositionsOfResponsibility}}
+\section{Positions of Responsibility}
+{{#positionsOfResponsibility}}
+\noindent {{#startDate}}{{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}} \quad {{/startDate}}\textbf{ {{name}} }{{#context}}, {{context}}{{/context}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+\vspace{4pt}
+{{/positionsOfResponsibility}}
+{{/hasPositionsOfResponsibility}}
+
+{{#hasAchievements}}
+\section{Honors \& Achievements}
+\begin{itemize}
+{{#achievements}}
+  \item {{text}}{{#yearLabel}} \hfill ({{yearLabel}}){{/yearLabel}}
+{{/achievements}}
+\end{itemize}
+{{/hasAchievements}}
+
+{{#hasSkillGroups}}
+\section{Technical Skills}
+\begin{itemize}
+{{#skillGroups}}
+  \item \textbf{ {{name}}: } {{skillsJoined}}
+{{/skillGroups}}
+\end{itemize}
+{{/hasSkillGroups}}
+{{^hasSkillGroups}}
 {{#skillsJoined}}
 \section{Technical Skills}
 {{&skillsJoined}}
 {{/skillsJoined}}
+{{/hasSkillGroups}}
+
+{{#hasCertifications}}
+\section{Certifications}
+\begin{itemize}
+{{#certifications}}
+  \item {{text}}{{#yearLabel}} \hfill ({{yearLabel}}){{/yearLabel}}
+{{/certifications}}
+\end{itemize}
+{{/hasCertifications}}
+
+{{#courseworkJoined}}
+\section{Key Coursework}
+{{courseworkJoined}}
+{{/courseworkJoined}}
 
 \end{document}

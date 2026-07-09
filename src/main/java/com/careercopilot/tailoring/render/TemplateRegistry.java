@@ -16,7 +16,8 @@ public class TemplateRegistry {
     COVER_LETTER
   }
 
-  public record Template(String id, String displayName, Kind kind, String resourcePath) {}
+  public record Template(
+      String id, String displayName, Kind kind, String resourcePath, String previewImagePath) {}
 
   private static final Map<String, Template> TEMPLATES =
       Map.of(
@@ -25,25 +26,36 @@ public class TemplateRegistry {
                   "classic-ats",
                   "Classic (ATS-safe)",
                   Kind.RESUME,
-                  "/templates/latex/classic-ats.tex.mustache"),
+                  "/templates/latex/classic-ats.tex.mustache",
+                  "/template-previews/classic-ats.png"),
           "modern-twocol",
               new Template(
                   "modern-twocol",
                   "Modern two-column",
                   Kind.RESUME,
-                  "/templates/latex/modern-twocol.tex.mustache"),
+                  "/templates/latex/modern-twocol.tex.mustache",
+                  "/template-previews/modern-twocol.png"),
           "compact",
               new Template(
-                  "compact", "Compact", Kind.RESUME, "/templates/latex/compact.tex.mustache"),
+                  "compact",
+                  "Compact",
+                  Kind.RESUME,
+                  "/templates/latex/compact.tex.mustache",
+                  "/template-previews/compact.png"),
           "academic",
               new Template(
-                  "academic", "Academic", Kind.RESUME, "/templates/latex/academic.tex.mustache"),
+                  "academic",
+                  "Academic",
+                  Kind.RESUME,
+                  "/templates/latex/academic.tex.mustache",
+                  "/template-previews/academic.png"),
           "cover-standard",
               new Template(
                   "cover-standard",
                   "Standard cover letter",
                   Kind.COVER_LETTER,
-                  "/templates/latex/cover-standard.tex.mustache"));
+                  "/templates/latex/cover-standard.tex.mustache",
+                  null));
 
   /** Returns the template or throws {@link TemplateNotFoundException} (400). */
   public Template require(String templateId, Kind expectedKind) {

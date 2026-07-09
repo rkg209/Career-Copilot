@@ -16,11 +16,19 @@
 \hfill {{#email}}{{email}}{{/email}}{{#phone}} \textbullet{} {{phone}}{{/phone}}{{#location}} \textbullet{} {{location}}{{/location}}
 {{/contactInfo}}
 
+{{#hasEducation}}
+\section{Education}
+{{#education}}
+\noindent\textbf{ {{degree}} }, \textit{ {{institution}} }{{#score}} \textbar{} {{score}}{{/score}} \hfill {{#yearRange}}{{yearRange}}{{/yearRange}}\\
+{{/education}}
+{{/hasEducation}}
+
 {{#summary}}
 \section{Summary}
 {{summary}}
 {{/summary}}
 
+{{#hasExperience}}
 \section{Experience}
 {{#experience}}
 \noindent\textbf{ {{title}} }, \textit{ {{company}} } \hfill {{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}
@@ -30,10 +38,66 @@
 {{/bullets}}
 \end{itemize}
 {{/experience}}
+{{/hasExperience}}
 
+{{#hasProjects}}
+\section{Projects}
+{{#projects}}
+\noindent\textbf{ {{name}} }{{#context}}, \textit{ {{context}} }{{/context}}{{#guide}} \textbar{} {{guide}}{{/guide}} \hfill {{#startDate}}{{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}{{/startDate}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+{{/projects}}
+{{/hasProjects}}
+
+{{#hasPositionsOfResponsibility}}
+\section{Positions of Responsibility}
+{{#positionsOfResponsibility}}
+\noindent\textbf{ {{name}} }{{#context}}, \textit{ {{context}} }{{/context}} \hfill {{#startDate}}{{startDate}}{{#endDate}} -- {{endDate}}{{/endDate}}{{/startDate}}
+\begin{itemize}
+{{#bullets}}
+  \item {{.}}
+{{/bullets}}
+\end{itemize}
+{{/positionsOfResponsibility}}
+{{/hasPositionsOfResponsibility}}
+
+{{#hasSkillGroups}}
+\section{Technical Skills}
+{{#skillGroups}}
+\noindent\textbf{ {{name}}: } {{skillsJoined}}\\
+{{/skillGroups}}
+{{/hasSkillGroups}}
+{{^hasSkillGroups}}
 {{#skillsJoined}}
 \section{Skills}
 {{&skillsJoined}}
 {{/skillsJoined}}
+{{/hasSkillGroups}}
+
+{{#hasAchievements}}
+\section{Achievements}
+\begin{itemize}
+{{#achievements}}
+  \item {{text}}{{#yearLabel}} \hfill ({{yearLabel}}){{/yearLabel}}
+{{/achievements}}
+\end{itemize}
+{{/hasAchievements}}
+
+{{#hasCertifications}}
+\section{Certifications}
+\begin{itemize}
+{{#certifications}}
+  \item {{text}}{{#yearLabel}} \hfill ({{yearLabel}}){{/yearLabel}}
+{{/certifications}}
+\end{itemize}
+{{/hasCertifications}}
+
+{{#courseworkJoined}}
+\section{Key Coursework}
+{{courseworkJoined}}
+{{/courseworkJoined}}
 
 \end{document}

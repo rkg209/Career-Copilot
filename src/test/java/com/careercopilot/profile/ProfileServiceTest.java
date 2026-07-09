@@ -31,6 +31,9 @@ class ProfileServiceTest {
 
   private CandidateProfileRepository profileRepository;
   private ExperienceRepository experienceRepository;
+  private EducationRepository educationRepository;
+  private SkillGroupRepository skillGroupRepository;
+  private ProfileHighlightRepository highlightRepository;
   private UserRepository userRepository;
   private ApplicationEventPublisher eventPublisher;
   private ProfileService service;
@@ -39,10 +42,20 @@ class ProfileServiceTest {
   void setUp() {
     profileRepository = mock(CandidateProfileRepository.class);
     experienceRepository = mock(ExperienceRepository.class);
+    educationRepository = mock(EducationRepository.class);
+    skillGroupRepository = mock(SkillGroupRepository.class);
+    highlightRepository = mock(ProfileHighlightRepository.class);
     userRepository = mock(UserRepository.class);
     eventPublisher = mock(ApplicationEventPublisher.class);
     service =
-        new ProfileService(profileRepository, experienceRepository, userRepository, eventPublisher);
+        new ProfileService(
+            profileRepository,
+            experienceRepository,
+            educationRepository,
+            skillGroupRepository,
+            highlightRepository,
+            userRepository,
+            eventPublisher);
 
     User user = mock(User.class);
     when(user.getId()).thenReturn(USER_ID);
@@ -78,6 +91,8 @@ class ProfileServiceTest {
                 null,
                 null,
                 List.of("SDE"),
+                null,
+                null,
                 null,
                 null));
 
@@ -151,6 +166,11 @@ class ProfileServiceTest {
             true,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null);
 
     assertThatThrownBy(() -> service.addExperience(EMAIL, bad))
@@ -169,9 +189,96 @@ class ProfileServiceTest {
             false,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null);
 
     assertThatThrownBy(() -> service.addExperience(EMAIL, bad))
+        .isInstanceOf(BadRequestException.class);
+  }
+
+  @Test
+  void addExperience_projectTypeWithoutProjectEntry_throwsBadRequest() {
+    ExperienceRequest bad =
+        new ExperienceRequest(
+            "SDE",
+            "Acme",
+            null,
+            LocalDate.of(2023, 1, 1),
+            null,
+            false,
+            null,
+            null,
+            null,
+            CorpusEntryType.WORK,
+            ProjectType.SELF,
+            null,
+            null,
+            null);
+
+    assertThatThrownBy(() -> service.addExperience(EMAIL, bad))
+        .isInstanceOf(BadRequestException.class);
+  }
+
+  @Test
+  void addExperience_projectEntry_persistsTypedFields() {
+    when(experienceRepository.save(any(ExperienceEntry.class)))
+        .thenAnswer(i -> withId(i.getArgument(0), 7L));
+    ExperienceRequest project =
+        new ExperienceRequest(
+            "Quadcopter control",
+            "Inter-IIT Team",
+            null,
+            LocalDate.of(2024, 10, 1),
+            null,
+            false,
+            null,
+            null,
+            null,
+            CorpusEntryType.PROJECT,
+            ProjectType.COURSE,
+            "Prof. Vachhani",
+            "Inter-IIT Tech Meet 2024",
+            "https://github.com/x/y");
+
+    ExperienceResponse response = service.addExperience(EMAIL, project);
+
+    assertThat(response.entryType()).isEqualTo(CorpusEntryType.PROJECT);
+    assertThat(response.projectType()).isEqualTo(ProjectType.COURSE);
+    assertThat(response.guide()).isEqualTo("Prof. Vachhani");
+  }
+
+  @Test
+  void addExperience_noEntryType_defaultsToWork() {
+    when(experienceRepository.save(any(ExperienceEntry.class)))
+        .thenAnswer(i -> withId(i.getArgument(0), 8L));
+
+    ExperienceResponse response = service.addExperience(EMAIL, validRequest());
+
+    assertThat(response.entryType()).isEqualTo(CorpusEntryType.WORK);
+  }
+
+  @Test
+  void replaceSkillGroups_duplicateName_throwsBadRequest() {
+    List<com.careercopilot.profile.dto.SkillGroupDto> groups =
+        List.of(
+            new com.careercopilot.profile.dto.SkillGroupDto(null, "Languages", List.of("C"), 0),
+            new com.careercopilot.profile.dto.SkillGroupDto(null, "languages", List.of("Go"), 1));
+
+    assertThatThrownBy(() -> service.replaceSkillGroups(EMAIL, groups))
+        .isInstanceOf(BadRequestException.class);
+  }
+
+  @Test
+  void addEducation_scoreValueWithoutType_throwsBadRequest() {
+    com.careercopilot.profile.dto.EducationRequest bad =
+        new com.careercopilot.profile.dto.EducationRequest(
+            "B.Tech.", "IIT Bombay", null, null, null, null, null, "9.24", null);
+
+    assertThatThrownBy(() -> service.addEducation(EMAIL, bad))
         .isInstanceOf(BadRequestException.class);
   }
 
@@ -185,7 +292,12 @@ class ProfileServiceTest {
         true,
         "Built APIs",
         List.of("Cut latency 40%"),
-        List.of("Java", "Postgres"));
+        List.of("Java", "Postgres"),
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   private static void applyValidRequest(ExperienceEntry entry) {

@@ -1,5 +1,7 @@
 package com.careercopilot.profile.dto;
 
+import com.careercopilot.profile.CorpusEntryType;
+import com.careercopilot.profile.ProjectType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -14,4 +16,9 @@ public record ExperienceRequest(
     Boolean isCurrent,
     String description,
     List<String> achievements,
-    List<String> skillsUsed) {}
+    List<String> skillsUsed,
+    CorpusEntryType entryType,
+    ProjectType projectType,
+    String guide,
+    String context,
+    String url) {}

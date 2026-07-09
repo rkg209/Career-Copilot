@@ -13,7 +13,12 @@ import com.careercopilot.auth.dto.LoginRequestDto;
 import com.careercopilot.auth.dto.RegisterRequestDto;
 import com.careercopilot.jobs.JobPosting;
 import com.careercopilot.jobs.JobPostingRepository;
+import com.careercopilot.profile.EducationEntry;
+import com.careercopilot.profile.EducationRepository;
+import com.careercopilot.profile.EducationScoreType;
 import com.careercopilot.profile.ExperienceRepository;
+import com.careercopilot.profile.SkillGroup;
+import com.careercopilot.profile.SkillGroupRepository;
 import com.careercopilot.shared.EmbeddingGateway;
 import com.careercopilot.shared.LlmGateway;
 import com.careercopilot.tailoring.render.LatexRenderer;
@@ -48,6 +53,8 @@ class TailoringIntegrationTest {
   @Autowired private TestRestTemplate restTemplate;
   @Autowired private UserRepository userRepository;
   @Autowired private ExperienceRepository experienceRepository;
+  @Autowired private EducationRepository educationRepository;
+  @Autowired private SkillGroupRepository skillGroupRepository;
   @Autowired private JobPostingRepository jobPostingRepository;
   @Autowired private ResumeVersionRepository resumeVersionRepository;
   @Autowired private ObjectMapper objectMapper;
@@ -167,6 +174,56 @@ class TailoringIntegrationTest {
     ResponseEntity<JsonNode> response = get("/api/v1/tailoring/templates", token);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).hasSize(5);
+  }
+
+  @Test
+  void tailor_injectsProfileSectionsDeterministically() throws Exception {
+    String token = seedUserWithCorpus("tailor-sections@example.com");
+    UUID userId =
+        userRepository.findByEmail("tailor-sections@example.com").map(User::getId).orElseThrow();
+
+    EducationEntry education = new EducationEntry(userId);
+    education.setDegree("B.Tech.");
+    education.setInstitution("IIT Bombay");
+    education.setScoreType(EducationScoreType.CPI);
+    education.setScoreValue("9.2");
+    educationRepository.save(education);
+
+    SkillGroup group = new SkillGroup(userId);
+    group.setName("Languages");
+    group.setSkills(java.util.List.of("Java", "Python"));
+    skillGroupRepository.save(group);
+
+    // LLM returns projects + PORs (schema-valid) but never education/skills sections.
+    JsonNode llmPayload =
+        objectMapper.readTree(
+            """
+            {"candidateName":"x",
+             "projects":[{"sourceEntryId":1,"name":"Quadcopter","bullets":["b"]}],
+             "positionsOfResponsibility":[{"sourceEntryId":2,"name":"Team Lead","bullets":["c"]}],
+             "skills":["Java"]}""");
+    when(llmGateway.callForJson(any(), any(), anyString(), anyString(), anyString(), any()))
+        .thenReturn(new LlmGateway.LlmJsonResult(llmPayload.deepCopy(), "test-model", 99));
+
+    ResponseEntity<JsonNode> response =
+        post(
+            "/api/v1/tailoring/tailor",
+            Map.of("jobPostingId", jobId, "templateId", "classic-ats"),
+            token);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+    Long id = response.getBody().get("resumeVersionId").asLong();
+    JsonNode payload =
+        objectMapper.readTree(resumeVersionRepository.findById(id).orElseThrow().getJsonPayload());
+
+    // Sections injected after the LLM call from structured profile facts.
+    assertThat(payload.get("education").get(0).get("score").asText()).isEqualTo("CPI 9.2");
+    assertThat(payload.get("skillGroups").get(0).get("skillsJoined").asText())
+        .isEqualTo("Java, Python");
+    // The LLM's typed arrays survive untouched.
+    assertThat(payload.get("projects").get(0).get("name").asText()).isEqualTo("Quadcopter");
+    assertThat(payload.get("positionsOfResponsibility").get(0).get("name").asText())
+        .isEqualTo("Team Lead");
   }
 
   private void stubLlmSuccess() {

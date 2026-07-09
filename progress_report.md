@@ -273,6 +273,57 @@ uncovered a critical regression that unit tests could never have caught.
 formula they validate — a regression golden, not an independent human-labeled benchmark. Replacing
 them with hand-scored labels is needed to make the headline before/after metric defensible.
 
+## Phase 2E — Profile Expansion: Full Resume Corpus ✅ (implemented 2026-07-08, 331/331 tests green)
+
+**Trigger:** analysis of 50 shortlisted-student resumes (`Temp_resumes/`, IIT Bombay placement
+format) showed the current profile (basic info + work experience) misses most of what real
+student resumes are made of.
+
+**Analysis findings (section coverage across 50 resumes):** education table 50/50, scholastic
+achievements 42/50, extracurriculars/hobbies 38/50, positions of responsibility 36/50,
+coursework lists 32/50, projects (course/self/research, usually with guide professor) ~48/50,
+thesis/seminar 28/50, categorized technical skills ~25/50, certifications 13/50,
+publications/patents 10/50, summary/objective paragraph 0/50. ~50 bullets per resume, almost all
+action-verb + quantified-outcome; projects — not jobs — are the backbone of student resumes.
+
+**Spec drafted:** `specs/profile-expansion-full-resume-corpus.md` (DRAFT v1.0). Key design
+decisions:
+- Generalize `experience_entries` into typed corpus entries (`entry_type`: WORK, INTERNSHIP,
+  PROJECT, POSITION_OF_RESPONSIBILITY, PUBLICATION + `project_type`, `guide`, `context`, `url`)
+  so the existing embedding/retrieval pipeline is reused unchanged (V20).
+- New structured-fact tables: `education_entries` (V21), `skill_groups` (V22),
+  `profile_highlights` (V23: scholastic achievements / certifications / extracurriculars),
+  plus `coursework` + `areas_of_interest` arrays on `candidate_profiles` (V24).
+- Tailoring integration: LLM selects grounded `projects` + `positionsOfResponsibility`
+  (sourceEntryId grounding extended); education/skills/achievements/certifications/coursework
+  injected deterministically post-LLM (contactInfo pattern); all 4 LaTeX templates gain the new
+  optional sections.
+- Deliberately excluded: gender/DOB (discrimination-sensitive), resume-PDF import (future),
+  per-course grades.
+
+**Implemented same day (spec APPROVED by user, then `/implement-spec`):**
+- Migrations V20–V24 applied (typed corpus, education, skill groups, highlights, profile lists).
+- `ExperienceText` embedding text now carries `[TYPE]` label, guide, context (hash-sensitive, so
+  edits re-embed); `TailoringPrompts` labels entries by type and routes them to
+  `experience[]`/`projects[]`/`positionsOfResponsibility[]`; resume JSON schema extended with
+  `anyOf` (at least one evidence section) and per-item `sourceEntryId` grounding; new
+  `ResumeSectionAssembler` injects education/skills/achievements/certifications/coursework
+  post-LLM; `LatexRenderer` injects `hasX` presence flags; all 4 templates extended and verified
+  by real Tectonic renders (caught and fixed a LaTeX paragraph-break bug in 3 templates —
+  education entries merged without `\par`).
+- New tests: `ProfileSectionsIntegrationTest`, `TypedCorpusIntegrationTest`,
+  `ExperienceTextTest`, `ResumeSectionAssemblerTest`, extended `GroundingValidatorTest`,
+  `TailoringIntegrationTest` (section-injection test), `LatexRendererTest` (full-sections render),
+  `ProfileServiceTest`. Full suite `./mvnw test` with Docker: **331/331 green**; frontend
+  `tsc` + `vite build` green.
+- Gotcha (recurring this session): the format-on-save hook strips imports that are momentarily
+  unused between two sequential edits — re-add imports after usages exist.
+
+**Also this session (2026-07-08):** template preview thumbnails added to the tailor page —
+`TemplateRegistry`/`TemplateResponse` expose `previewImagePath`, real dummy-resume renders of all
+4 templates committed as PNGs under `frontend/public/template-previews/`, side-panel preview on
+`TailorPage`. Full suite green, frontend build green.
+
 ## Cross-Phase Threads
 
 - **Migration history:** V1–V4 (Phase 0 foundation/auth) → V5 (ATS job sources) → V6–V8 (profiles, experience, embeddings) → V9–V11 (resume versions, cover letters, contact fields) → V12 (scoring results) → V13–V14 (applications, interview logs) → V15 (company interview intel). All additive, per the deploy rule. Numbering collisions happened four times now (V5, V8, the Phase 5 spec's stale V11/V12, and the Phase 6 spec's stale V13) and were resolved by renumbering forward each time.
@@ -303,4 +354,7 @@ them with hand-scored labels is needed to make the headline before/after metric 
 | 2026-07-05 | Phase 6 implemented (company interview intel, 159/159 unit tests green; integration tests pending a Docker-available run) |
 | 2026-07-05 | Full-suite audit + fixes: critical V14/V15 SMALLINT↔Integer schema bug fixed, LLM response cache added, company-snapshot trim fix. Full `./mvnw test` with Docker **242/242 green** |
 | 2026-07-05 | Frontend redesign — "Modern SaaS (dark-first)" theme: Tailwind v4 + Inter, light/dark toggle, shared `AppLayout`/`AuthLayout` shell + `components/ui/` primitives, all 13 pages + `GapReport` restyled. Design system documented in `frontend/DESIGN.md`. `npm run build`/`lint`/`tsc` green; both themes verified visually. No backend/API changes |
+| 2026-07-08 | Template preview thumbnails on tailor page (real dummy renders of all 4 templates) |
+| 2026-07-08 | 50-resume corpus analyzed; Phase 2E profile-expansion spec drafted (`specs/profile-expansion-full-resume-corpus.md`, DRAFT) |
+| 2026-07-08 | Phase 2E implemented (typed corpus V20, education V21, skill groups V22, highlights V23, profile lists V24; tailoring sections + templates + profile UI). 331/331 tests green |
 | — pending — | Deploy checkpoint 1 (Phases 1–6) |

@@ -57,6 +57,14 @@ public class CandidateProfile {
   @Column(name = "open_to_remote", nullable = false)
   private boolean openToRemote = true;
 
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(nullable = false, columnDefinition = "text[]")
+  private List<String> coursework = new ArrayList<>();
+
+  @JdbcTypeCode(SqlTypes.ARRAY)
+  @Column(name = "areas_of_interest", nullable = false, columnDefinition = "text[]")
+  private List<String> areasOfInterest = new ArrayList<>();
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -157,6 +165,22 @@ public class CandidateProfile {
 
   public void setTargetLocations(List<String> targetLocations) {
     this.targetLocations = targetLocations;
+  }
+
+  public List<String> getCoursework() {
+    return coursework;
+  }
+
+  public void setCoursework(List<String> coursework) {
+    this.coursework = coursework;
+  }
+
+  public List<String> getAreasOfInterest() {
+    return areasOfInterest;
+  }
+
+  public void setAreasOfInterest(List<String> areasOfInterest) {
+    this.areasOfInterest = areasOfInterest;
   }
 
   public boolean isOpenToRemote() {

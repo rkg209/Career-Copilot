@@ -47,6 +47,20 @@ public class ExperienceEntry {
 
   private String description;
 
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "entry_type", nullable = false, columnDefinition = "corpus_entry_type")
+  private CorpusEntryType entryType = CorpusEntryType.WORK;
+
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "project_type", columnDefinition = "project_type")
+  private ProjectType projectType;
+
+  private String guide;
+
+  private String context;
+
+  private String url;
+
   @JdbcTypeCode(SqlTypes.ARRAY)
   @Column(nullable = false, columnDefinition = "text[]")
   private List<String> achievements = new ArrayList<>();
@@ -142,6 +156,46 @@ public class ExperienceEntry {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public CorpusEntryType getEntryType() {
+    return entryType;
+  }
+
+  public void setEntryType(CorpusEntryType entryType) {
+    this.entryType = entryType;
+  }
+
+  public ProjectType getProjectType() {
+    return projectType;
+  }
+
+  public void setProjectType(ProjectType projectType) {
+    this.projectType = projectType;
+  }
+
+  public String getGuide() {
+    return guide;
+  }
+
+  public void setGuide(String guide) {
+    this.guide = guide;
+  }
+
+  public String getContext() {
+    return context;
+  }
+
+  public void setContext(String context) {
+    this.context = context;
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
   }
 
   public List<String> getAchievements() {

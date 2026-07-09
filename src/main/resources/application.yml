@@ -53,8 +53,8 @@ llm:
       max-tokens: 1500
       temperature: 0.2
     TAILORING:
-      # Free OpenRouter model; gpt-oss-120b advertises reliable structured JSON output.
-      model: ${LLM_TAILORING_MODEL:openai/gpt-oss-120b:free}
+      # Free OpenRouter model; gpt-oss-120b was frequently upstream-rate-limited, switched to nemotron.
+      model: ${LLM_TAILORING_MODEL:nvidia/nemotron-3-super-120b-a12b:free}
       max-tokens: 2500
       temperature: 0.4
     SCORING_AUGMENTATION:
@@ -62,7 +62,7 @@ llm:
       max-tokens: 1500
       temperature: 0.2
     COVER_LETTER:
-      model: ${LLM_TAILORING_MODEL:openai/gpt-oss-120b:free}
+      model: ${LLM_TAILORING_MODEL:nvidia/nemotron-3-super-120b-a12b:free}
       max-tokens: 1200
       temperature: 0.5
 

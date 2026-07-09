@@ -73,6 +73,24 @@
   deploy). **Deploy pending (stacks with checkpoint 1). New env vars: `INTEL_MIN_AGGREGATION`
   (default 3), `INTEL_LLM_ASSIST_ENABLED` (default false, reserved — no LLM assist implemented).**
 
+- **Phase 2E — Profile Expansion: Full Resume Corpus** — informed by a 50-resume analysis
+  (`Temp_resumes/`, IIT placement format). `experience_entries` generalized into a typed corpus
+  (V20: `entry_type` WORK/INTERNSHIP/PROJECT/POSITION_OF_RESPONSIBILITY/PUBLICATION +
+  `project_type`, `guide`, `context`, `url`) reusing the existing embedding/retrieval pipeline
+  unchanged; new structured-fact tables `education_entries` (V21), `skill_groups` (V22),
+  `profile_highlights` (V23: scholastic achievements / certifications / extracurriculars), and
+  `coursework`/`areas_of_interest` arrays on `candidate_profiles` (V24). New owner-scoped CRUD:
+  `/api/v1/profile/education`, `/skill-groups` (bulk PUT), `/highlights` (`?type=` filter).
+  Tailoring: resume schema gains grounded `projects[]`/`positionsOfResponsibility[]`
+  (sourceEntryId grounding extended in `GroundingValidator`); education/skill-groups/
+  achievements/certifications/coursework injected deterministically post-LLM by
+  `ResumeSectionAssembler` (contactInfo pattern — never round-trip the provider); all 4 LaTeX
+  templates render the new optional sections (presence flags injected by `LatexRenderer`);
+  preview thumbnails regenerated. React profile page: education editor, typed corpus-entry form,
+  skill-group editor, highlight lists, coursework/interests fields. Deliberately excluded:
+  gender/DOB, resume-PDF import, per-course grades. Code complete, 331/331 tests green
+  (full suite with Docker). **Deploy pending (stacks with checkpoint 1). No new env vars.**
+
 > Embedding convention (set in Phase 2): all embedding calls go through `shared/EmbeddingGateway`
 > (never `EmbeddingModel` directly). Model/dimension are config-driven; `vector(768)` columns must
 > match `EMBEDDING_DIMENSION`. Vector mapping uses `hibernate-vector` (`@JdbcTypeCode(SqlTypes.VECTOR)`),
@@ -129,7 +147,7 @@
 
 ## CRITICAL — Resume Rule
 
-- **LLM emits structured JSON ONLY** — never LaTeX, never raw text, never PDF.
+- **LLM emits structured JSON ONLY** — never LaTeX, never raw text, never PDF.  
 - The JSON schema for resume data is defined in `.claude/skills/latex-resume-renderer.md`.
 - **Rendering is deterministic**: JSON → selected LaTeX template from template catalog → Tectonic → PDF.
 - Templates live in `src/main/resources/templates/latex/`. Adding a template = adding a `.tex.mustache` file + registering in `TemplateRegistry`.

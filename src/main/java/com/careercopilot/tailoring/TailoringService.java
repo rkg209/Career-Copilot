@@ -57,6 +57,7 @@ public class TailoringService {
   private final TemplateRegistry templateRegistry;
   private final LatexRenderer latexRenderer;
   private final ResumeVersionRepository resumeVersionRepository;
+  private final ResumeSectionAssembler sectionAssembler;
   private final ObjectMapper objectMapper;
   private final int retrievalTopK;
 
@@ -71,6 +72,7 @@ public class TailoringService {
       TemplateRegistry templateRegistry,
       LatexRenderer latexRenderer,
       ResumeVersionRepository resumeVersionRepository,
+      ResumeSectionAssembler sectionAssembler,
       ObjectMapper objectMapper,
       @Value("${tailoring.retrieval-top-k}") int retrievalTopK) {
     this.userRepository = userRepository;
@@ -83,6 +85,7 @@ public class TailoringService {
     this.templateRegistry = templateRegistry;
     this.latexRenderer = latexRenderer;
     this.resumeVersionRepository = resumeVersionRepository;
+    this.sectionAssembler = sectionAssembler;
     this.objectMapper = objectMapper;
     this.retrievalTopK = retrievalTopK;
   }
@@ -113,11 +116,13 @@ public class TailoringService {
             "resume-json-payload",
             groundingContext(entries));
 
-    // Contact info is injected deterministically after the LLM call — PII never round-trips
-    // through the provider.
+    // Contact info and structured profile facts (education, skill groups, achievements,
+    // certifications, coursework) are injected deterministically after the LLM call — they
+    // never round-trip through the provider.
     ObjectNode payload = (ObjectNode) result.payload();
     payload.put("candidateName", candidateName);
     payload.set("contactInfo", contactInfo(profile, user));
+    sectionAssembler.inject(payload, user.getId(), profile);
 
     ResumeVersion saved =
         resumeVersionRepository.save(

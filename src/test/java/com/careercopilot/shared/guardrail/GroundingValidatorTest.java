@@ -61,4 +61,38 @@ class GroundingValidatorTest {
     JsonNode payload = mapper.readTree("{\"salutation\":\"Dear team\"}");
     assertThatCode(() -> validator.validate(payload, context)).doesNotThrowAnyException();
   }
+
+  @Test
+  void validate_acceptsGroundedProjectsAndPositions() throws Exception {
+    JsonNode payload =
+        mapper.readTree(
+            """
+            {"projects":[{"sourceEntryId":7,"name":"Quadcopter control","bullets":["x"]}],
+             "positionsOfResponsibility":[{"sourceEntryId":9,"name":"Team Lead","bullets":["y"]}]}""");
+    assertThatCode(() -> validator.validate(payload, context)).doesNotThrowAnyException();
+  }
+
+  @Test
+  void validate_rejectsUnknownSourceEntryIdInProjects() throws Exception {
+    JsonNode payload =
+        mapper.readTree(
+            """
+            {"projects":[{"sourceEntryId":555,"name":"Invented Project","bullets":["x"]}]}""");
+    assertThatThrownBy(() -> validator.validate(payload, context))
+        .isInstanceOf(GroundingException.class)
+        .satisfies(
+            e ->
+                assertThat(((GroundingException) e).getViolations())
+                    .anyMatch(v -> v.contains("555") && v.contains("projects")));
+  }
+
+  @Test
+  void validate_rejectsUnknownSourceEntryIdInPositions() throws Exception {
+    JsonNode payload =
+        mapper.readTree(
+            """
+            {"positionsOfResponsibility":[{"sourceEntryId":666,"name":"Fake Lead","bullets":["x"]}]}""");
+    assertThatThrownBy(() -> validator.validate(payload, context))
+        .isInstanceOf(GroundingException.class);
+  }
 }

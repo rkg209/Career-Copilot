@@ -156,7 +156,18 @@ export interface Profile {
   targetRoles: string[];
   targetLocations: string[];
   openToRemote: boolean;
+  coursework: string[];
+  areasOfInterest: string[];
 }
+
+export type CorpusEntryType =
+  | "WORK"
+  | "INTERNSHIP"
+  | "PROJECT"
+  | "POSITION_OF_RESPONSIBILITY"
+  | "PUBLICATION";
+
+export type ProjectType = "COURSE" | "SELF" | "RESEARCH" | "THESIS";
 
 export interface ExperienceRequest {
   role: string;
@@ -168,6 +179,11 @@ export interface ExperienceRequest {
   description?: string;
   achievements?: string[];
   skillsUsed?: string[];
+  entryType?: CorpusEntryType;
+  projectType?: ProjectType;
+  guide?: string;
+  context?: string;
+  url?: string;
 }
 
 export interface Experience {
@@ -181,9 +197,57 @@ export interface Experience {
   description: string | null;
   achievements: string[];
   skillsUsed: string[];
+  entryType: CorpusEntryType;
+  projectType: ProjectType | null;
+  guide: string | null;
+  context: string | null;
+  url: string | null;
   embeddingStatus: "PENDING" | "EMBEDDED";
   createdAt: string;
   updatedAt: string;
+}
+
+export type EducationScoreType = "CPI" | "PERCENTAGE" | "GRADE";
+
+export interface EducationRequest {
+  degree: string;
+  institution: string;
+  university?: string;
+  specialization?: string;
+  startYear?: number;
+  endYear?: number;
+  scoreType?: EducationScoreType;
+  scoreValue?: string;
+  displayOrder?: number;
+}
+
+export interface Education extends EducationRequest {
+  id: number;
+  displayOrder: number;
+}
+
+export interface SkillGroup {
+  id?: number;
+  name: string;
+  skills: string[];
+  displayOrder?: number;
+}
+
+export type HighlightType = "SCHOLASTIC_ACHIEVEMENT" | "CERTIFICATION" | "EXTRACURRICULAR";
+
+export interface HighlightRequest {
+  type: HighlightType;
+  text: string;
+  yearLabel?: string;
+  displayOrder?: number;
+}
+
+export interface Highlight {
+  id: number;
+  type: HighlightType;
+  text: string;
+  yearLabel: string | null;
+  displayOrder: number;
 }
 
 function authHeader(token: string): Record<string, string> {
@@ -233,10 +297,88 @@ export function deleteExperience(id: number, token: string): Promise<void> {
   });
 }
 
+export function listEducation(token: string): Promise<Education[]> {
+  return request<Education[]>("/api/v1/profile/education", { headers: authHeader(token) });
+}
+
+export function addEducation(req: EducationRequest, token: string): Promise<Education> {
+  return request<Education>("/api/v1/profile/education", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function updateEducation(
+  id: number,
+  req: EducationRequest,
+  token: string,
+): Promise<Education> {
+  return request<Education>(`/api/v1/profile/education/${id}`, {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function deleteEducation(id: number, token: string): Promise<void> {
+  return request<void>(`/api/v1/profile/education/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
+export function listSkillGroups(token: string): Promise<SkillGroup[]> {
+  return request<SkillGroup[]>("/api/v1/profile/skill-groups", { headers: authHeader(token) });
+}
+
+export function replaceSkillGroups(groups: SkillGroup[], token: string): Promise<SkillGroup[]> {
+  return request<SkillGroup[]>("/api/v1/profile/skill-groups", {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(groups),
+  });
+}
+
+export function listHighlights(token: string, type?: HighlightType): Promise<Highlight[]> {
+  const query = type ? `?type=${type}` : "";
+  return request<Highlight[]>(`/api/v1/profile/highlights${query}`, {
+    headers: authHeader(token),
+  });
+}
+
+export function addHighlight(req: HighlightRequest, token: string): Promise<Highlight> {
+  return request<Highlight>("/api/v1/profile/highlights", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function updateHighlight(
+  id: number,
+  req: HighlightRequest,
+  token: string,
+): Promise<Highlight> {
+  return request<Highlight>(`/api/v1/profile/highlights/${id}`, {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function deleteHighlight(id: number, token: string): Promise<void> {
+  return request<void>(`/api/v1/profile/highlights/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
 export interface TemplateInfo {
   id: string;
   displayName: string;
   kind: "RESUME" | "COVER_LETTER";
+  previewImagePath: string | null;
 }
 
 export interface ResumeVersion {
