@@ -35,6 +35,7 @@ class JobSearchIntegrationTest {
     repository.save(custom("1", "Senior Java Backend Engineer", "Acme", "Berlin", true, 140000));
     repository.save(custom("2", "Frontend React Developer", "Globex", "London", false, 90000));
     repository.save(custom("3", "Python Data Engineer", "Initech", "Berlin", true, 120000));
+    repository.save(noSalary("4", "DevOps Engineer", "Umbrella Corp", "Remote", true));
   }
 
   @Test
@@ -59,8 +60,12 @@ class JobSearchIntegrationTest {
 
   @Test
   void search_bySalaryMin() {
+    // Postings: (1) 140k-160k, (2) 90k-110k, (3) 120k-140k, (4) no salary listed. A $130k floor
+    // should match any posting whose upper end clears the bar (compare against salary_max, not
+    // salary_min) plus postings with no salary data at all, since we can't confirm those fall
+    // short of the threshold.
     JsonNode body = search("?salaryMin=130000");
-    assertThat(body.get("content")).hasSize(1);
+    assertThat(body.get("content")).hasSize(3);
   }
 
   @Test
@@ -96,6 +101,30 @@ class JobSearchIntegrationTest {
             BigDecimal.valueOf(salary),
             BigDecimal.valueOf(salary + 20000),
             "USD",
+            List.of(),
+            List.of(),
+            title + " " + company,
+            "https://example.test/" + externalId,
+            Instant.parse("2026-06-20T00:00:00Z"),
+            null,
+            null);
+    return JobPostingMapper.toEntity(n);
+  }
+
+  private JobPosting noSalary(
+      String externalId, String title, String company, String location, boolean remote) {
+    NormalizedJob n =
+        new NormalizedJob(
+            JobSource.REMOTEOK,
+            externalId,
+            title,
+            company,
+            location,
+            remote,
+            "full_time",
+            null,
+            null,
+            null,
             List.of(),
             List.of(),
             title + " " + company,

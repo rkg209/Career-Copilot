@@ -1,18 +1,31 @@
+# Build & Dependencies
 target/
 *.class
 .mvn/wrapper/maven-wrapper.jar
-
 node_modules/
 dist/
-frontend/.env
-frontend/.env.local
 
+# IDE
 *.iml
 .idea/
 .vscode/
 *.DS_Store
 
+# Environment & Secrets
 .env
 .env.local
+frontend/.env
+frontend/.env.local
+
+# Claude Code (local development)
+.claude/
+
+# Project Documentation
+CLAUDE.md
+progress_report.md
 Instructions.txt
+
+# Temporary Files
 Temp_resumes/
+*.log
+*.tmp

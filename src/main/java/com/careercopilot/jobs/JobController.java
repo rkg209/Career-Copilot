@@ -52,6 +52,15 @@ public class JobController {
     return jobService.roles();
   }
 
+  @GetMapping("/for-me")
+  public PageResponse<JobPostingResponse> forMe(
+      Principal principal,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(defaultValue = "postedAt,desc") String sort) {
+    return jobService.forMe(principal.getName(), page, size, sort);
+  }
+
   @GetMapping("/ingestion-status")
   public IngestionStatusResponse ingestionStatus() {
     return jobService.ingestionStatus();

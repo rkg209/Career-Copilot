@@ -44,6 +44,8 @@ public class SecurityConfig {
                 auth.requestMatchers(
                         "/api/v1/auth/register", "/api/v1/auth/login", "/actuator/health")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/jobs/for-me")
+                    .authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/v1/jobs", "/api/v1/jobs/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/intel/**")

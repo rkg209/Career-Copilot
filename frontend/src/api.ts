@@ -132,6 +132,12 @@ export function getJob(id: number | string): Promise<JobPosting> {
   return request<JobPosting>(`/api/v1/jobs/${id}`);
 }
 
+export function getJobsForMe(page = 0, size = 20, token: string): Promise<Page<JobPosting>> {
+  return request<Page<JobPosting>>(`/api/v1/jobs/for-me${queryString({ page, size })}`, {
+    headers: authHeader(token),
+  });
+}
+
 export function getIngestionStatus(): Promise<IngestionStatus> {
   return request<IngestionStatus>("/api/v1/jobs/ingestion-status");
 }

@@ -10,6 +10,8 @@ import com.careercopilot.jobs.dto.RolePresetResponse;
 import com.careercopilot.jobs.dto.RolesResponse;
 import com.careercopilot.jobs.source.ManualPasteJobSource;
 import com.careercopilot.jobs.source.NormalizedJob;
+import com.careercopilot.profile.CandidateProfile;
+import com.careercopilot.profile.CandidateProfileRepository;
 import com.careercopilot.shared.BadRequestException;
 import com.careercopilot.shared.PageResponse;
 import com.careercopilot.shared.ResourceNotFoundException;
@@ -17,6 +19,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +39,7 @@ public class JobService {
   private final JobPostingRepository repository;
   private final ManualPasteJobSource manualPasteJobSource;
   private final UserRepository userRepository;
+  private final CandidateProfileRepository profileRepository;
   private final RoleProperties roleProperties;
   private final String ingestionCron;
 
@@ -41,11 +47,13 @@ public class JobService {
       JobPostingRepository repository,
       ManualPasteJobSource manualPasteJobSource,
       UserRepository userRepository,
+      CandidateProfileRepository profileRepository,
       RoleProperties roleProperties,
       @Value("${jobs.ingestion.cron:0 0 */12 * * *}") String ingestionCron) {
     this.repository = repository;
     this.manualPasteJobSource = manualPasteJobSource;
     this.userRepository = userRepository;
+    this.profileRepository = profileRepository;
     this.roleProperties = roleProperties;
     this.ingestionCron = ingestionCron;
   }
@@ -77,6 +85,60 @@ public class JobService {
             validatedRole(criteria.role()),
             pageable);
     return toPageResponse(result);
+  }
+
+  /**
+   * "My Preference" feed: active postings matching the caller's profile target roles / areas of
+   * interest. Returns an empty page (rather than "match everything") when the profile has no
+   * preferences set.
+   */
+  @Transactional(readOnly = true)
+  public PageResponse<JobPostingResponse> forMe(String email, int page, int size, String sort) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+    List<String> terms =
+        profileRepository
+            .findByUserId(user.getId())
+            .map(JobService::preferenceTerms)
+            .orElse(List.of());
+    Pageable pageable = PageRequest.of(page, validatedSize(size), JobSortMapper.searchSort(sort));
+    String tsQuery = toTsQuery(terms);
+    if (tsQuery.isEmpty()) {
+      return toPageResponse(Page.empty(pageable));
+    }
+    return toPageResponse(repository.findByPreferenceTerms(tsQuery, pageable));
+  }
+
+  /**
+   * Builds a {@code to_tsquery}-ready expression that ORs each free-text term (its words ANDed
+   * together) — e.g. {@code ["Backend Engineer", "Machine Learning"]} becomes {@code "(backend &
+   * engineer) | (machine & learning)"}. Non-word characters are stripped rather than escaped, since
+   * {@code to_tsquery} (unlike {@code plainto_tsquery}/{@code websearch_to_query}, neither of which
+   * this Postgres image provides) has no plain-text mode and would otherwise throw on stray
+   * punctuation.
+   */
+  private static String toTsQuery(List<String> terms) {
+    return terms.stream()
+        .map(JobService::tsQueryWordGroup)
+        .filter(group -> !group.isEmpty())
+        .map(group -> "(" + group + ")")
+        .collect(Collectors.joining(" | "));
+  }
+
+  private static String tsQueryWordGroup(String term) {
+    return Stream.of(term.toLowerCase(Locale.ROOT).split("[^a-z0-9]+"))
+        .filter(word -> !word.isEmpty())
+        .collect(Collectors.joining(" & "));
+  }
+
+  private static List<String> preferenceTerms(CandidateProfile profile) {
+    return Stream.concat(profile.getTargetRoles().stream(), profile.getAreasOfInterest().stream())
+        .map(String::trim)
+        .filter(s -> !s.isBlank())
+        .distinct()
+        .toList();
   }
 
   /** The available role presets, in configured display order. */

@@ -21,16 +21,23 @@ final class TailoringPrompts {
 
   static final String RESUME_SYSTEM_PROMPT =
       """
-      You produce ONLY structured resume JSON matching the provided schema. You may use ONLY the \
-      supplied corpus entries verbatim in substance; never invent employers, titles, dates, \
-      metrics, or skills. Entries are labeled with their type. Route each selected entry into the \
-      matching output array: WORK/INTERNSHIP entries into experience[], PROJECT/PUBLICATION \
+      You produce ONLY structured resume JSON matching the provided schema. Facts (employers, \
+      titles, dates, metrics, skills) must come ONLY from the supplied corpus entries — never \
+      invent or alter them. But you MUST rewrite the wording: do not copy the entry's \
+      description/achievements sentences as-is. For every bullet, find the specific requirement, \
+      technology, or responsibility in the target job description that this fact demonstrates, \
+      then write a new sentence that leads with that connection — same underlying fact and \
+      metric, different words, different emphasis, different sentence structure than the source \
+      text. Two bullets written from the same source entry for two different jobs should read \
+      noticeably differently. Entries are labeled with their type. Route each selected entry into \
+      the matching output array: WORK/INTERNSHIP entries into experience[], PROJECT/PUBLICATION \
       entries into projects[], POSITION OF RESPONSIBILITY entries into \
       positionsOfResponsibility[]. Every item must carry the sourceEntryId of the entry it came \
-      from; an experience item's company must exactly match its source entry's organization. Write 2-4 concise, \
-      quantified, action-verb bullets per item. Do NOT emit education, skill groups, \
-      certifications, or achievements — those are attached by the system. No LaTeX, no markdown, \
-      no prose outside JSON.""";
+      from; an experience item's company must exactly match its source entry's organization. Write \
+      2-4 concise, quantified, action-verb bullets per item, ordered so the bullet most relevant \
+      to the target job comes first. Do NOT emit education, skill groups, certifications, or \
+      achievements — those are attached by the system. No LaTeX, no markdown, no prose outside \
+      JSON.""";
 
   static final String COVER_LETTER_SYSTEM_PROMPT =
       """
@@ -65,7 +72,12 @@ final class TailoringPrompts {
         - projects[].name = the entry's title; copy context/guide/dates from the entry \
         when present
         - positionsOfResponsibility[].name = the entry's title, context = its organization
-        - bullets rephrase the entry's description/achievements for relevance to the target job
+        - Before writing bullets, identify the 3-5 most important skills/requirements stated \
+        in the target job description above.
+        - bullets: for each fact in the entry's description/achievements, write a NEW sentence \
+        (not the source wording) that ties the fact to one of those job requirements where \
+        truthfully possible — same fact and metric, different phrasing and emphasis than the \
+        source text
         - skills only from the entries' skills, ordered by relevance to the job
         - omit any of experience/projects/positionsOfResponsibility entirely when no entry \
         of that type is relevant (never emit an empty array)

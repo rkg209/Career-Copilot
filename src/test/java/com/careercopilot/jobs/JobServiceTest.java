@@ -15,6 +15,8 @@ import com.careercopilot.jobs.dto.JobPasteRequest;
 import com.careercopilot.jobs.dto.JobPostingResponse;
 import com.careercopilot.jobs.dto.JobSearchCriteria;
 import com.careercopilot.jobs.source.ManualPasteJobSource;
+import com.careercopilot.profile.CandidateProfile;
+import com.careercopilot.profile.CandidateProfileRepository;
 import com.careercopilot.shared.BadRequestException;
 import com.careercopilot.shared.PageResponse;
 import java.math.BigDecimal;
@@ -36,6 +38,7 @@ class JobServiceTest {
 
   @Mock private JobPostingRepository repository;
   @Mock private UserRepository userRepository;
+  @Mock private CandidateProfileRepository profileRepository;
 
   private JobService service() {
     return service("0 0 */12 * * *");
@@ -46,6 +49,7 @@ class JobServiceTest {
         repository,
         new ManualPasteJobSource(),
         userRepository,
+        profileRepository,
         new RoleProperties(),
         ingestionCron);
   }
@@ -159,5 +163,46 @@ class JobServiceTest {
 
     assertThat(status.lastScrapedAt()).isNull();
     assertThat(status.nextScrapedAt()).isNotNull();
+  }
+
+  @Test
+  void forMe_mergesTargetRolesAndInterestsIntoPreferenceQuery() {
+    UUID userId = UUID.randomUUID();
+    User user = org.mockito.Mockito.mock(User.class);
+    when(user.getId()).thenReturn(userId);
+    when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
+
+    CandidateProfile profile = new CandidateProfile(userId);
+    profile.setTargetRoles(List.of("Backend Engineer", " Data Scientist "));
+    profile.setAreasOfInterest(List.of("Machine Learning", "Backend Engineer"));
+    when(profileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+
+    Page<JobPosting> empty = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+    when(repository.findByPreferenceTerms(any(String.class), any(Pageable.class)))
+        .thenReturn(empty);
+
+    PageResponse<JobPostingResponse> result =
+        service().forMe("me@example.com", 0, 20, "postedAt,desc");
+
+    assertThat(result.content()).isEmpty();
+    verify(repository)
+        .findByPreferenceTerms(
+            eq("(backend & engineer) | (data & scientist) | (machine & learning)"),
+            any(Pageable.class));
+  }
+
+  @Test
+  void forMe_noPreferencesSet_returnsEmptyPageWithoutQuerying() {
+    UUID userId = UUID.randomUUID();
+    User user = org.mockito.Mockito.mock(User.class);
+    when(user.getId()).thenReturn(userId);
+    when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
+    when(profileRepository.findByUserId(userId)).thenReturn(Optional.empty());
+
+    PageResponse<JobPostingResponse> result =
+        service().forMe("me@example.com", 0, 20, "postedAt,desc");
+
+    assertThat(result.content()).isEmpty();
+    org.mockito.Mockito.verifyNoInteractions(repository);
   }
 }

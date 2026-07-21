@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   getIngestionStatus,
+  getJobsForMe,
   listJobs,
   searchJobs,
   type IngestionStatus,
@@ -24,6 +25,8 @@ import {
 const PAGE_SIZE = 20;
 
 export function JobsPage() {
+  const token = localStorage.getItem("token");
+  const [tab, setTab] = useState<"preference" | "all">(token ? "preference" : "all");
   const [data, setData] = useState<Page<JobPosting> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
@@ -37,6 +40,16 @@ export function JobsPage() {
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
+    setData(null);
+    setError(null);
+
+    if (tab === "preference" && token) {
+      getJobsForMe(page, PAGE_SIZE, token)
+        .then(setData)
+        .catch(() => setError("Could not load your preference feed"));
+      return;
+    }
+
     const anyFilter = q || location || remoteType || employmentType || salaryMin;
     const promise = anyFilter
       ? searchJobs({
@@ -52,7 +65,12 @@ export function JobsPage() {
 
     promise.then(setData).catch(() => setError("Could not load jobs"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, searching]);
+  }, [page, searching, tab]);
+
+  function handleTabChange(next: "preference" | "all") {
+    setTab(next);
+    setPage(0);
+  }
 
   useEffect(() => {
     getIngestionStatus()
@@ -92,8 +110,34 @@ export function JobsPage() {
         </p>
       )}
 
-      <Card className="mb-6">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+      {token && (
+        <div className="mb-4 flex gap-2">
+          <Button
+            variant={tab === "preference" ? "primary" : "secondary"}
+            onClick={() => handleTabChange("preference")}
+          >
+            My Preference
+          </Button>
+          <Button
+            variant={tab === "all" ? "primary" : "secondary"}
+            onClick={() => handleTabChange("all")}
+          >
+            All Listings
+          </Button>
+        </div>
+      )}
+
+      {tab === "preference" && token ? (
+        <p className="mb-4 text-sm text-muted">
+          Jobs matching your Target roles and Areas of Interest from your{" "}
+          <Link to="/profile" className="underline">
+            profile
+          </Link>
+          .
+        </p>
+      ) : (
+        <Card className="mb-6">
+          <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <Input
             className="lg:col-span-2"
             placeholder="Keyword"
@@ -128,12 +172,19 @@ export function JobsPage() {
               Search
             </Button>
           </div>
-        </form>
-      </Card>
+          </form>
+        </Card>
+      )}
 
       {error && <Alert variant="error">{error}</Alert>}
       {!data && !error && <Spinner />}
-      {data && data.content.length === 0 && (
+      {data && data.content.length === 0 && tab === "preference" && (
+        <EmptyState
+          title="No matching jobs yet"
+          description="Add Target roles and Areas of Interest on your profile to personalize this feed."
+        />
+      )}
+      {data && data.content.length === 0 && tab === "all" && (
         <EmptyState title="No jobs found" description="Try adjusting your filters or paste a job description." />
       )}
 
