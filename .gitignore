@@ -29,3 +29,6 @@ Instructions.txt
 Temp_resumes/
 *.log
 *.tmp
+.claude/
+planning/
+specs/
