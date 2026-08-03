@@ -1,0 +1,38 @@
+# Curated role-pattern seed questions (Phase 7). Keyed by role category -> round type -> seed
+# questions. Company-agnostic by design: ROLE_PATTERN questions must never name a specific
+# company (enforced by GeneratedQuestionValidator).
+"Software Engineer":
+  TECHNICAL:
+    - "Walk me through how you would design a URL shortening service."
+    - "Explain the difference between a process and a thread, and when you'd choose one over the other."
+    - "How would you debug a memory leak in a long-running Java service?"
+  SYSTEM_DESIGN:
+    - "Design a rate limiter that can be used across multiple API gateways."
+    - "How would you design a notification system that supports email, SMS, and push?"
+  BEHAVIOURAL:
+    - "Tell me about a time you disagreed with a teammate's technical decision. What did you do?"
+    - "Describe a project where the requirements changed midway through. How did you adapt?"
+  HR:
+    - "Why are you looking to leave your current role?"
+    - "Where do you see yourself in the next three years?"
+
+"Data Scientist":
+  TECHNICAL:
+    - "How would you handle a dataset with severe class imbalance?"
+    - "Explain bias-variance tradeoff with a concrete example from a project you've worked on."
+  BEHAVIOURAL:
+    - "Tell me about a time a model you shipped did not perform as expected in production."
+
+"Machine Learning Engineer":
+  TECHNICAL:
+    - "How would you design a feature store for a recommendation system?"
+    - "Walk through how you would deploy and monitor a model in production."
+  SYSTEM_DESIGN:
+    - "Design an end-to-end pipeline for retraining a fraud-detection model on new data."
+
+"Product Manager":
+  BEHAVIOURAL:
+    - "Tell me about a product decision you made with incomplete data."
+    - "Describe how you prioritized a roadmap when engineering capacity was cut in half."
+  HR:
+    - "How do you handle disagreement with an engineering lead about scope?"

@@ -10,6 +10,7 @@ import {
   SettingsIcon,
   LogoutIcon,
   CloseIcon,
+  SparklesIcon,
 } from "./icons";
 
 export type NavItem = {
@@ -25,6 +26,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { to: "/applications", label: "Applications", icon: ClipboardIcon },
   { to: "/resumes", label: "Resumes", icon: FileIcon },
   { to: "/intel", label: "Company Intel", icon: BuildingIcon },
+  { to: "/trainer", label: "Practice", icon: SparklesIcon },
 ];
 
 /** Account actions shown in the right-hand drawer. */

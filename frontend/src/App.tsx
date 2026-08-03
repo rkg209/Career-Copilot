@@ -13,6 +13,8 @@ import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationDetailPage } from "./pages/ApplicationDetailPage";
 import { CompanyIntelPage } from "./pages/CompanyIntelPage";
 import { CompanyIntelDetailPage } from "./pages/CompanyIntelDetailPage";
+import { TrainerPage } from "./pages/TrainerPage";
+import { ReviewQueuePage } from "./pages/ReviewQueuePage";
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
         <Route path="/applications/:id" element={<ApplicationDetailPage />} />
         <Route path="/intel" element={<CompanyIntelPage />} />
         <Route path="/intel/:companyName" element={<CompanyIntelDetailPage />} />
+        <Route path="/trainer" element={<TrainerPage />} />
+        <Route path="/trainer/review" element={<ReviewQueuePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

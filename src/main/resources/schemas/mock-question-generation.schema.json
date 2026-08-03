@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MockQuestionGeneration",
+  "type": "object",
+  "properties": {
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "questionText": { "type": "string", "minLength": 5 },
+          "source": { "type": "string", "enum": ["OWN_LOG", "PUBLIC_INTEL", "ROLE_PATTERN"] },
+          "sourceRefId": { "type": ["integer", "null"] }
+        },
+        "required": ["questionText", "source"]
+      }
+    }
+  },
+  "required": ["questions"],
+  "additionalProperties": false
+}

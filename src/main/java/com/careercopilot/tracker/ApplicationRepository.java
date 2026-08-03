@@ -14,4 +14,9 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
   @Query("select a.id from Application a where a.companySnapshot = :company")
   List<Long> findIdsByCompanySnapshot(@Param("company") String company);
+
+  /** Own-application seed material for trainer question generation (owner-scoped). */
+  List<Application> findByUserId(UUID userId);
+
+  List<Application> findByUserIdAndCompanySnapshotIgnoreCase(UUID userId, String company);
 }

@@ -703,3 +703,88 @@ export function getCompanyIntel(companyName: string): Promise<CompanyIntelDetail
     `/api/v1/intel/companies/${encodeURIComponent(companyName)}`,
   );
 }
+
+export type MockQuestionSource = "OWN_LOG" | "PUBLIC_INTEL" | "ROLE_PATTERN";
+
+export interface MockQuestion {
+  id: number;
+  company: string | null;
+  roleCategory: string | null;
+  roundType: InterviewRoundType | null;
+  questionText: string;
+  source: MockQuestionSource;
+  sourceRefId: number | null;
+  lastGrade: number | null;
+  createdAt: string;
+}
+
+export interface GenerateRequest {
+  company?: string;
+  roleCategory?: string;
+  roundType?: InterviewRoundType;
+  count: number;
+}
+
+export interface NextReview {
+  dueAt: string;
+  intervalDays: number;
+  easeFactor: number;
+}
+
+export interface AnswerResult {
+  practiceAnswerId: number;
+  mockQuestionId: number;
+  qualityGrade: number;
+  feedback: string;
+  nextReview: NextReview;
+}
+
+export interface DueCard {
+  mockQuestionId: number;
+  questionText: string;
+  dueAt: string;
+  repetitions: number;
+  easeFactor: number;
+  isNew: boolean;
+}
+
+export function generateQuestions(
+  req: GenerateRequest,
+  token: string,
+): Promise<MockQuestion[]> {
+  return request<MockQuestion[]>("/api/v1/trainer/generate", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(req),
+  });
+}
+
+export function answerQuestion(
+  questionId: number,
+  answerText: string,
+  token: string,
+): Promise<AnswerResult> {
+  return request<AnswerResult>(`/api/v1/trainer/questions/${questionId}/answer`, {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify({ answerText }),
+  });
+}
+
+export function listQuestions(
+  token: string,
+  page = 0,
+  size = 20,
+): Promise<Page<MockQuestion>> {
+  return request<Page<MockQuestion>>(
+    `/api/v1/trainer/questions${queryString({ page, size })}`,
+    { headers: authHeader(token) },
+  );
+}
+
+export function listDueCards(token: string, limit = 20): Promise<{ content: DueCard[] }> {
+  return request<{ content: DueCard[] }>(
+    `/api/v1/trainer/review/due${queryString({ limit })}`,
+    { headers: authHeader(token) },
+  );
+}

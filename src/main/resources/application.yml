@@ -74,6 +74,8 @@ careercopilot:
   intel:
     min-aggregation-threshold: ${INTEL_MIN_AGGREGATION:3}
     llm-assist-enabled: ${INTEL_LLM_ASSIST_ENABLED:false}
+  trainer:
+    daily-new-limit: ${TRAINER_DAILY_NEW_LIMIT:20}
 
 tailoring:
   retrieval-top-k: ${RETRIEVAL_TOP_K:6}

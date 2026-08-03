@@ -15,4 +15,9 @@ public interface InterviewLogRepository extends JpaRepository<InterviewLog, Long
 
   List<InterviewLog> findByApplicationIdInAndContributionStatus(
       List<Long> applicationIds, ContributionStatus contributionStatus);
+
+  /** Own-log seed material for trainer question generation (owner-scoped). */
+  List<InterviewLog> findByUserId(UUID userId);
+
+  List<InterviewLog> findByApplicationIdIn(List<Long> applicationIds);
 }
