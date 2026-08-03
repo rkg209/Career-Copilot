@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -59,6 +60,9 @@ public class ScoringService {
     this.objectMapper = objectMapper;
   }
 
+  @Timed(
+      value = "scoring.score",
+      percentiles = {0.5, 0.99})
   public AtsGapReport score(String email, ScoreRequest request) {
     User user = resolveUser(email);
     ResumeVersion resume = ownedResume(user, request.resumeVersionId());

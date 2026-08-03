@@ -1,0 +1,600 @@
+[
+  {
+    "id": "jd-01",
+    "title": "Backend Engineer",
+    "required": [
+      "java",
+      "spring boot",
+      "postgresql",
+      "docker"
+    ],
+    "preferred": [
+      "kubernetes",
+      "terraform"
+    ],
+    "resumeText": [
+      "java",
+      "spring boot",
+      "postgresql",
+      "kubernetes",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 67.5,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-02",
+    "title": "Senior Java Developer",
+    "required": [
+      "java",
+      "spring boot",
+      "kafka",
+      "postgresql",
+      "docker"
+    ],
+    "preferred": [
+      "kubernetes",
+      "grafana"
+    ],
+    "resumeText": [
+      "java",
+      "spring boot",
+      "kafka",
+      "postgresql",
+      "docker",
+      "kubernetes",
+      "grafana",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 100.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-03",
+    "title": "Platform Engineer",
+    "required": [
+      "kubernetes",
+      "terraform",
+      "ansible",
+      "linux"
+    ],
+    "preferred": [
+      "prometheus",
+      "grafana"
+    ],
+    "resumeText": [
+      "kubernetes",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 17.5,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-04",
+    "title": "Frontend Engineer",
+    "required": [
+      "react",
+      "typescript",
+      "css"
+    ],
+    "preferred": [
+      "graphql"
+    ],
+    "resumeText": [
+      "react",
+      "typescript",
+      "graphql",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 76.25,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-05",
+    "title": "Full Stack Developer",
+    "required": [
+      "react",
+      "typescript",
+      "java",
+      "spring boot",
+      "postgresql",
+      "docker"
+    ],
+    "preferred": [
+      "kubernetes",
+      "graphql",
+      "redis"
+    ],
+    "resumeText": [
+      "react",
+      "typescript",
+      "java",
+      "spring boot",
+      "kubernetes",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 56.67,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-06",
+    "title": "JVM Engineer",
+    "required": [
+      "java",
+      "kafka",
+      "postgresql",
+      "docker"
+    ],
+    "preferred": [],
+    "resumeText": [
+      "java",
+      "kafka",
+      "postgresql",
+      "docker",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 100.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-07",
+    "title": "Site Reliability Engineer",
+    "required": [
+      "kubernetes",
+      "terraform",
+      "prometheus",
+      "linux",
+      "ansible"
+    ],
+    "preferred": [
+      "grafana",
+      "python"
+    ],
+    "resumeText": [
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 0.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-08",
+    "title": "Data Engineer",
+    "required": [
+      "python",
+      "spark",
+      "kafka",
+      "postgresql"
+    ],
+    "preferred": [
+      "airflow",
+      "snowflake"
+    ],
+    "resumeText": [
+      "python",
+      "spark",
+      "airflow",
+      "snowflake",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 65.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-09",
+    "title": "ML Engineer",
+    "required": [
+      "python",
+      "machine learning",
+      "pytorch"
+    ],
+    "preferred": [
+      "kubernetes",
+      "spark",
+      "airflow"
+    ],
+    "resumeText": [
+      "python",
+      "machine learning",
+      "pytorch",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 67.5,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-10",
+    "title": "API Engineer",
+    "required": [
+      "java",
+      "spring boot",
+      "graphql",
+      "postgresql",
+      "redis"
+    ],
+    "preferred": [
+      "kafka",
+      "docker"
+    ],
+    "resumeText": [
+      "java",
+      "spring boot",
+      "graphql",
+      "kafka",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 57.07,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-11",
+    "title": "Cloud Engineer",
+    "required": [
+      "aws",
+      "terraform",
+      "python",
+      "linux"
+    ],
+    "preferred": [
+      "kubernetes",
+      "ansible",
+      "docker"
+    ],
+    "resumeText": [
+      "aws",
+      "terraform",
+      "python",
+      "kubernetes",
+      "ansible",
+      "docker",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 82.86,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-12",
+    "title": "Microservices Developer",
+    "required": [
+      "java",
+      "spring boot",
+      "kafka",
+      "kubernetes",
+      "docker",
+      "postgresql"
+    ],
+    "preferred": [
+      "redis",
+      "grafana"
+    ],
+    "resumeText": [
+      "java",
+      "spring boot",
+      "redis",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 38.12,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-13",
+    "title": "Junior Backend Developer",
+    "required": [
+      "java",
+      "sql",
+      "git"
+    ],
+    "preferred": [
+      "docker"
+    ],
+    "resumeText": [
+      "java",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 23.75,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-14",
+    "title": "Search Engineer",
+    "required": [
+      "elasticsearch",
+      "java",
+      "kafka",
+      "python",
+      "linux"
+    ],
+    "preferred": [
+      "kubernetes",
+      "docker",
+      "redis"
+    ],
+    "resumeText": [
+      "elasticsearch",
+      "java",
+      "kafka",
+      "python",
+      "kubernetes",
+      "docker",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 75.92,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-15",
+    "title": "Infrastructure Developer",
+    "required": [
+      "terraform",
+      "aws",
+      "python",
+      "linux"
+    ],
+    "preferred": [
+      "kubernetes"
+    ],
+    "resumeText": [
+      "terraform",
+      "aws",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 36.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-16",
+    "title": "Payments Engineer",
+    "required": [
+      "java",
+      "spring boot",
+      "postgresql"
+    ],
+    "preferred": [
+      "kafka"
+    ],
+    "resumeText": [
+      "java",
+      "spring boot",
+      "postgresql",
+      "kafka",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 100.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-17",
+    "title": "Streaming Platform Engineer",
+    "required": [
+      "kafka",
+      "java",
+      "kubernetes",
+      "postgresql",
+      "docker",
+      "linux"
+    ],
+    "preferred": [
+      "terraform",
+      "prometheus"
+    ],
+    "resumeText": [
+      "kafka",
+      "java",
+      "kubernetes",
+      "postgresql",
+      "docker",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 59.38,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-18",
+    "title": "Web Developer",
+    "required": [
+      "react",
+      "typescript",
+      "css",
+      "html"
+    ],
+    "preferred": [
+      "graphql",
+      "redis",
+      "docker"
+    ],
+    "resumeText": [
+      "react",
+      "graphql",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 27.62,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-19",
+    "title": "Database Engineer",
+    "required": [
+      "postgresql",
+      "sql",
+      "python",
+      "linux",
+      "docker"
+    ],
+    "preferred": [
+      "aws",
+      "terraform",
+      "ansible",
+      "kafka"
+    ],
+    "resumeText": [
+      "postgresql",
+      "sql",
+      "aws",
+      "terraform",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 43.17,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  },
+  {
+    "id": "jd-20",
+    "title": "DevOps Engineer",
+    "required": [
+      "docker",
+      "kubernetes",
+      "terraform"
+    ],
+    "preferred": [
+      "prometheus",
+      "grafana"
+    ],
+    "resumeText": [
+      "docker",
+      "kubernetes",
+      "prometheus",
+      "grafana",
+      "Collaborated with product teams and mentored junior colleagues."
+    ],
+    "labeledScore": 77.0,
+    "baselineResumeText": [
+      "Bachelor of Science in Computer Science",
+      "Collaborated with cross-functional teams to deliver product features on schedule",
+      "Wrote unit tests and participated in code reviews",
+      "Presented project updates to stakeholders and mentored junior engineers",
+      "Strong communicator with experience in Agile ceremonies and sprint planning",
+      "Contributed to internal documentation and onboarding materials"
+    ]
+  }
+]

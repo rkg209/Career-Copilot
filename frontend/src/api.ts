@@ -10,6 +10,17 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
+/** Carries the HTTP status so callers (notably useFetch) can act on 401s centrally. */
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -21,7 +32,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `Request failed with status ${response.status}`);
+    throw new ApiError(response.status, body || `Request failed with status ${response.status}`);
   }
 
   if (response.status === 204) {
@@ -497,7 +508,7 @@ export async function downloadPdf(path: string, filename: string, token: string)
   const response = await fetch(`${API_BASE}${path}`, { headers: authHeader(token) });
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `Download failed with status ${response.status}`);
+    throw new ApiError(response.status, body || `Download failed with status ${response.status}`);
   }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);

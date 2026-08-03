@@ -12,3 +12,4 @@ export { PageHeader } from "./PageHeader";
 export { Spinner } from "./Spinner";
 export { EmptyState } from "./EmptyState";
 export { Alert } from "./Alert";
+export { Skeleton, SkeletonList } from "./Skeleton";

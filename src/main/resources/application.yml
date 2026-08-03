@@ -5,6 +5,12 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/careercopilot}
     username: ${SPRING_DATASOURCE_USERNAME:careercopilot}
     password: ${SPRING_DATASOURCE_PASSWORD:careercopilot}
+    hikari:
+      # Sized for the single DO App Platform instance this app currently runs on; the DB's own
+      # max_connections comfortably covers one app instance at this pool size.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:30000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:1800000}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -32,7 +38,36 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: career-copilot
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+
+logging:
+  structured:
+    format:
+      console: ${LOG_FORMAT:}
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+  exception-resolver-order: -2147483647
+
+springdoc:
+  api-docs:
+    path: /api/v1/docs
+  swagger-ui:
+    path: /api/v1/docs/swagger-ui
 
 jwt:
   secret: ${JWT_SECRET}

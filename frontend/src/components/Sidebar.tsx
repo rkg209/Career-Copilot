@@ -1,4 +1,4 @@
-import type { ComponentType, SVGProps } from "react";
+import { useEffect, useRef, type ComponentType, type SVGProps } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
@@ -62,11 +62,38 @@ interface SidebarProps {
 /** Togglable right-hand account drawer (hidden by default). */
 export function Sidebar({ open, onClose, email }: SidebarProps) {
   const navigate = useNavigate();
+  const asideRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const logout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
+
+  // Focus trap: move focus into the dialog on open, and keep Tab cycling within it.
+  useEffect(() => {
+    if (!open) return;
+    closeButtonRef.current?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !asideRef.current) return;
+      const focusable = asideRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   return (
     <>
@@ -80,6 +107,7 @@ export function Sidebar({ open, onClose, email }: SidebarProps) {
       />
 
       <aside
+        ref={asideRef}
         role="dialog"
         aria-modal="true"
         aria-hidden={!open}
@@ -90,6 +118,7 @@ export function Sidebar({ open, onClose, email }: SidebarProps) {
         <div className="flex h-16 items-center justify-between px-5">
           <span className="text-sm font-semibold text-muted">Account</span>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             className="btn btn-ghost btn-sm !px-2"

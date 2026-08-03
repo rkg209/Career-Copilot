@@ -56,7 +56,13 @@ Semantic CSS variables defined in `:root` (light) and `.dark` (dark), surfaced t
 Thin, typed wrappers over the classes above — prefer these in pages over raw HTML:
 `Button`, `Input`, `Textarea`, `Select`, `Field` (label + control + error), `Card`, `Chip`,
 `Badge`, `StatusBadge` (maps the 8 `ApplicationStatus` values to success/accent/danger/muted),
-`PageHeader`, `Spinner`, `EmptyState`, `Alert` (error / success / info).
+`PageHeader`, `Spinner`, `EmptyState`, `Alert` (error / success / info), `Skeleton` / `SkeletonList`
+(pulsing placeholder blocks for a page's initial load, before there's data to show — prefer these
+over `Spinner` when the eventual layout is known, since it reduces layout shift on load).
+
+Fetching pages should use the `useFetch` hook (`src/lib/useFetch.ts`) instead of hand-rolled
+`useEffect` + three `useState`s: it returns `{data, error, loading, reload}`, and centrally handles
+a 401 by clearing the token and redirecting to `/login` (via the `ApiError` thrown by `src/api.ts`).
 
 ## Layouts
 

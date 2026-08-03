@@ -31,8 +31,17 @@ public class IntelService {
 
   public PageResponse<CompanyIntelSummary> browseCompanies(Pageable pageable) {
     Page<String> companies = companyIntelRepository.findDistinctPublishedCompanies(pageable);
+    // Single batched fetch for the whole page instead of one query per company (was N+1).
+    List<CompanyIntelEntry> pageEntries =
+        companyIntelRepository.findByCompanyInAndPublishedTrue(companies.getContent());
+    Map<String, List<CompanyIntelEntry>> byCompany = new LinkedHashMap<>();
+    for (CompanyIntelEntry entry : pageEntries) {
+      byCompany.computeIfAbsent(entry.getCompany(), k -> new ArrayList<>()).add(entry);
+    }
     List<CompanyIntelSummary> content =
-        companies.getContent().stream().map(this::summarize).toList();
+        companies.getContent().stream()
+            .map(company -> summarize(company, byCompany.getOrDefault(company, List.of())))
+            .toList();
     return PageResponse.of(companies, content);
   }
 
@@ -52,8 +61,7 @@ public class IntelService {
     return new CompanyIntelDetail(company, rounds);
   }
 
-  private CompanyIntelSummary summarize(String company) {
-    List<CompanyIntelEntry> entries = companyIntelRepository.findByCompanyAndPublishedTrue(company);
+  private CompanyIntelSummary summarize(String company, List<CompanyIntelEntry> entries) {
     List<InterviewRoundType> roundTypes =
         entries.stream().map(CompanyIntelEntry::getRoundType).distinct().toList();
     OptionalDouble average = averageDifficulty(entries);

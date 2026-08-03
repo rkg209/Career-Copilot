@@ -70,18 +70,25 @@ export function TrainerPage() {
 
       <Card className="mb-6">
         <form onSubmit={generate} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:flex-wrap">
-          <Field label="Company" className="sm:w-56">
-            <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Optional" />
-          </Field>
-          <Field label="Role category" className="sm:w-56">
+          <Field label="Company" htmlFor="trainer-company" className="sm:w-56">
             <Input
+              id="trainer-company"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Optional"
+            />
+          </Field>
+          <Field label="Role category" htmlFor="trainer-role-category" className="sm:w-56">
+            <Input
+              id="trainer-role-category"
               value={roleCategory}
               onChange={(e) => setRoleCategory(e.target.value)}
               placeholder="e.g. Software Engineer"
             />
           </Field>
-          <Field label="Round type" className="sm:w-56">
+          <Field label="Round type" htmlFor="trainer-round-type" className="sm:w-56">
             <Select
+              id="trainer-round-type"
               value={roundType}
               onChange={(e) => setRoundType(e.target.value as InterviewRoundType | "")}
             >
@@ -93,8 +100,9 @@ export function TrainerPage() {
               ))}
             </Select>
           </Field>
-          <Field label="Count" className="sm:w-28">
+          <Field label="Count" htmlFor="trainer-count" className="sm:w-28">
             <Input
+              id="trainer-count"
               type="number"
               min={1}
               max={25}

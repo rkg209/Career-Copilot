@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { me } from "../api";
+import { useFetch } from "../lib/useFetch";
 import { AppLayout } from "../components/AppLayout";
-import { Card, PageHeader } from "../components/ui";
+import { Alert, Card, PageHeader, Skeleton } from "../components/ui";
 import { getTheme, setTheme, type Theme } from "../theme";
 
 const THEMES: { value: Theme; label: string }[] = [
@@ -13,15 +14,12 @@ const THEMES: { value: Theme; label: string }[] = [
 export function SettingsPage() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
-  const [email, setEmail] = useState<string | null>(null);
   const [theme, setThemeState] = useState<Theme>(getTheme());
-
-  useEffect(() => {
-    if (!token) return;
-    me(token)
-      .then((u) => setEmail(u.email))
-      .catch(() => {});
-  }, [token]);
+  const {
+    data: user,
+    error,
+    loading,
+  } = useFetch(() => (token ? me(token) : Promise.reject(new Error("Not signed in"))), [token]);
 
   const chooseTheme = (t: Theme) => {
     setTheme(t);
@@ -38,13 +36,17 @@ export function SettingsPage() {
       <PageHeader title="Settings" subtitle="Manage your account and preferences." />
 
       <div className="flex max-w-2xl flex-col gap-6">
+        {error && <Alert variant="error">Couldn't load your account details: {error}</Alert>}
+
         {/* Account */}
         <Card>
           <h2 className="text-base font-semibold">Account</h2>
           <p className="mt-1 text-sm text-muted">Your sign-in details.</p>
           <dl className="mt-4 flex items-center justify-between gap-4 border-t pt-4">
             <dt className="text-sm text-muted">Email</dt>
-            <dd className="text-sm font-medium text-fg">{email ?? "…"}</dd>
+            <dd className="text-sm font-medium text-fg">
+              {loading ? <Skeleton className="h-4 w-40" /> : (user?.email ?? "—")}
+            </dd>
           </dl>
           <div className="mt-4 border-t pt-4">
             <p className="text-sm text-muted">

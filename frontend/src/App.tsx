@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -15,6 +15,7 @@ import { CompanyIntelPage } from "./pages/CompanyIntelPage";
 import { CompanyIntelDetailPage } from "./pages/CompanyIntelDetailPage";
 import { TrainerPage } from "./pages/TrainerPage";
 import { ReviewQueuePage } from "./pages/ReviewQueuePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
   return (
@@ -36,7 +37,7 @@ function App() {
         <Route path="/intel/:companyName" element={<CompanyIntelDetailPage />} />
         <Route path="/trainer" element={<TrainerPage />} />
         <Route path="/trainer/review" element={<ReviewQueuePage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -29,6 +29,17 @@ services:
       - key: JWT_EXPIRY_SECONDS
         scope: RUN_TIME
         value: "86400"
+      # Single-origin CORS: must match the deployed frontend's actual origin, not the
+      # http://localhost:5173 dev default that SecurityConfig falls back to otherwise.
+      - key: CORS_ALLOWED_ORIGIN
+        scope: RUN_TIME
+        type: SECRET
+      - key: SENTRY_DSN
+        scope: RUN_TIME
+        type: SECRET
+      - key: SENTRY_ENVIRONMENT
+        scope: RUN_TIME
+        value: "production"
 
 static_sites:
   - name: frontend

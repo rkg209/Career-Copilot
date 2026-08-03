@@ -1,0 +1,298 @@
+[
+  {
+    "name": "unknown_source_id_experience",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 999,
+          "title": "CEO",
+          "company": "Invented Inc",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "999"
+    ]
+  },
+  {
+    "name": "unknown_source_id_projects",
+    "payload": {
+      "projects": [
+        {
+          "sourceEntryId": 555,
+          "name": "Invented Project",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "555",
+      "projects"
+    ]
+  },
+  {
+    "name": "unknown_source_id_positions",
+    "payload": {
+      "positionsOfResponsibility": [
+        {
+          "sourceEntryId": 666,
+          "name": "Fake Lead",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "666",
+      "positionsOfResponsibility"
+    ]
+  },
+  {
+    "name": "negative_source_id",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": -1,
+          "title": "Engineer",
+          "company": "Nowhere",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "-1"
+    ]
+  },
+  {
+    "name": "zero_source_id",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 0,
+          "title": "Engineer",
+          "company": "Nowhere",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "0"
+    ]
+  },
+  {
+    "name": "missing_source_id_field",
+    "payload": {
+      "experience": [
+        {
+          "title": "Engineer",
+          "company": "Nowhere",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "-1"
+    ]
+  },
+  {
+    "name": "company_mismatch",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 7,
+          "title": "Backend Engineer",
+          "company": "Wrong Corp",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "7",
+      "company mismatch"
+    ]
+  },
+  {
+    "name": "company_mismatch_similar_name",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 7,
+          "title": "Backend Engineer",
+          "company": "Acme Corporation",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "7",
+      "company mismatch"
+    ]
+  },
+  {
+    "name": "invented_project_unknown_id",
+    "payload": {
+      "projects": [
+        {
+          "sourceEntryId": 1234,
+          "name": "Quantum Blockchain AI",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "1234",
+      "projects"
+    ]
+  },
+  {
+    "name": "invented_position_unknown_id",
+    "payload": {
+      "positionsOfResponsibility": [
+        {
+          "sourceEntryId": 4321,
+          "name": "President",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "4321",
+      "positionsOfResponsibility"
+    ]
+  },
+  {
+    "name": "mixed_valid_and_invalid_experience",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 7,
+          "title": "Backend Engineer",
+          "company": "Acme Corp",
+          "bullets": [
+            "x"
+          ]
+        },
+        {
+          "sourceEntryId": 888,
+          "title": "Ghost Role",
+          "company": "Ghost Inc",
+          "bullets": [
+            "y"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "888"
+    ]
+  },
+  {
+    "name": "mixed_valid_and_invalid_projects",
+    "payload": {
+      "projects": [
+        {
+          "sourceEntryId": 9,
+          "name": "Real Project",
+          "bullets": [
+            "x"
+          ]
+        },
+        {
+          "sourceEntryId": 777,
+          "name": "Fabricated Project",
+          "bullets": [
+            "y"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "777",
+      "projects"
+    ]
+  },
+  {
+    "name": "multiple_violations_same_payload",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 7,
+          "title": "Backend Engineer",
+          "company": "Totally Different Corp",
+          "bullets": [
+            "x"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "sourceEntryId": 424242,
+          "name": "Invented Project",
+          "bullets": [
+            "y"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "424242",
+      "company mismatch"
+    ]
+  },
+  {
+    "name": "large_negative_id",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": -999,
+          "title": "Engineer",
+          "company": "Nowhere",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "-999"
+    ]
+  },
+  {
+    "name": "extreme_unknown_id",
+    "payload": {
+      "experience": [
+        {
+          "sourceEntryId": 999999999,
+          "title": "Engineer",
+          "company": "Nowhere",
+          "bullets": [
+            "x"
+          ]
+        }
+      ]
+    },
+    "expectSubstrings": [
+      "999999999"
+    ]
+  }
+]

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { listApplications, type Application, type ApplicationStatus } from "../api";
+import { listApplications, type ApplicationStatus } from "../api";
+import { useFetch } from "../lib/useFetch";
 import { AppLayout } from "../components/AppLayout";
-import { Alert, Button, EmptyState, PageHeader, StatusBadge } from "../components/ui";
+import { Alert, Button, EmptyState, PageHeader, SkeletonList, StatusBadge } from "../components/ui";
 
 const STATUSES: ApplicationStatus[] = [
   "SAVED",
@@ -17,15 +17,12 @@ const STATUSES: ApplicationStatus[] = [
 
 export function ApplicationsPage() {
   const token = localStorage.getItem("token");
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!token) return;
-    listApplications(token)
-      .then((page) => setApplications(page.content))
-      .catch(() => setError("Failed to load applications"));
-  }, [token]);
+  const {
+    data: page,
+    error,
+    loading,
+  } = useFetch(() => listApplications(token!), [token]);
+  const applications = page?.content ?? [];
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -37,7 +34,9 @@ export function ApplicationsPage() {
 
       {error && <Alert variant="error" className="mb-4">{error}</Alert>}
 
-      {applications.length === 0 && !error ? (
+      {loading ? (
+        <SkeletonList rows={4} rowClassName="h-16" />
+      ) : applications.length === 0 && !error ? (
         <EmptyState
           title="No applications tracked yet"
           description="Open a job and click “Track this application” to start your board."

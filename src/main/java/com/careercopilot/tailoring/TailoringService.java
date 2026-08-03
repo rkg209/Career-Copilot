@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.micrometer.core.annotation.Timed;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,9 @@ public class TailoringService {
     this.retrievalTopK = retrievalTopK;
   }
 
+  @Timed(
+      value = "tailoring.tailor",
+      percentiles = {0.5, 0.99})
   public ResumeResponse tailor(String email, TailorRequest request) {
     User user = resolveUser(email);
     TemplateRegistry.Template template =

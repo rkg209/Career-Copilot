@@ -27,6 +27,7 @@ import {
   Input,
   PageHeader,
   Select,
+  Skeleton,
   Textarea,
 } from "../components/ui";
 
@@ -68,19 +69,22 @@ export function ProfilePage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
-    getProfile(token)
-      .then((p) => {
+    Promise.all([
+      getProfile(token).then((p) => {
         setProfile(p);
         setTargetRolesText(p.targetRoles.join(", "));
         setTargetLocationsText(p.targetLocations.join(", "));
         setCourseworkText(p.coursework.join(", "));
         setInterestsText(p.areasOfInterest.join(", "));
-      })
-      .catch(() => setError("Could not load profile."));
-    refreshEntries(token);
+      }),
+      listExperience(token).then(setEntries),
+    ])
+      .catch(() => setError("Could not load your profile. Try refreshing the page."))
+      .finally(() => setLoading(false));
   }, [token]);
 
   if (!token) {
@@ -191,6 +195,13 @@ export function ProfilePage() {
 
       {message && <Alert variant="success" className="mb-4">{message}</Alert>}
       {error && <Alert variant="error" className="mb-4">{error}</Alert>}
+
+      {loading && (
+        <div className="mb-6 flex flex-col gap-3">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      )}
 
       {profile && (
         <Card className="mb-6">

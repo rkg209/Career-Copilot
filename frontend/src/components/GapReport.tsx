@@ -25,7 +25,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 export function GapReport({ report }: { report: AtsGapReport }) {
   const color = scoreColor(report.score);
   return (
-    <div className="card-glow">
+    <div className="card-glow" aria-live="polite">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">ATS score</h2>
         <span className="text-2xl font-bold" style={{ color }}>

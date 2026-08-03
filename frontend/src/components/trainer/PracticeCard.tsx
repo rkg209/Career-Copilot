@@ -45,7 +45,7 @@ export function PracticeCard({ questionId, questionText, token, onAnswered }: Pr
       {error && <Alert variant="error">{error}</Alert>}
 
       {result ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" aria-live="polite">
           <div className="flex items-center gap-2">
             <Badge tone={gradeTone(result.qualityGrade)}>Grade {result.qualityGrade}/5</Badge>
             <span className="text-xs text-muted">

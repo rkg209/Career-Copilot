@@ -1,24 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { listDueCards, type DueCard } from "../api";
+import { listDueCards } from "../api";
+import { useFetch } from "../lib/useFetch";
 import { AppLayout } from "../components/AppLayout";
 import { PracticeCard } from "../components/trainer/PracticeCard";
-import { Alert, Badge, Button, EmptyState, PageHeader } from "../components/ui";
+import { Alert, Badge, Button, EmptyState, PageHeader, SkeletonList } from "../components/ui";
 
 export function ReviewQueuePage() {
   const token = localStorage.getItem("token");
-  const [cards, setCards] = useState<DueCard[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [answeredIds, setAnsweredIds] = useState<number[]>([]);
-
-  const load = () => {
-    if (!token) return;
-    listDueCards(token)
-      .then((page) => setCards(page.content))
-      .catch(() => setError("Failed to load your review queue"));
-  };
-
-  useEffect(load, [token]);
+  const {
+    data: page,
+    error,
+    loading,
+  } = useFetch(() => listDueCards(token!), [token]);
+  const cards = page?.content ?? [];
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -32,7 +28,9 @@ export function ReviewQueuePage() {
 
       {error && <Alert variant="error" className="mb-4">{error}</Alert>}
 
-      {remaining.length === 0 && !error ? (
+      {loading ? (
+        <SkeletonList rows={3} rowClassName="h-28" />
+      ) : remaining.length === 0 && !error ? (
         <EmptyState
           title="Nothing due right now"
           description="Generate a fresh batch of practice questions to keep building your queue."

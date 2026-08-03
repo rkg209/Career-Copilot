@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import {
   downloadResumePdf,
@@ -7,34 +7,34 @@ import {
   type AtsGapReport,
   type ResumeVersion,
 } from "../api";
+import { useFetch } from "../lib/useFetch";
 import { GapReport } from "../components/GapReport";
 import { AppLayout } from "../components/AppLayout";
-import { Alert, Badge, Button, Card, EmptyState, PageHeader } from "../components/ui";
+import { Alert, Badge, Button, Card, EmptyState, PageHeader, SkeletonList } from "../components/ui";
 
 export function ResumesPage() {
   const token = localStorage.getItem("token");
-  const [resumes, setResumes] = useState<ResumeVersion[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [report, setReport] = useState<AtsGapReport | null>(null);
   const [scoringId, setScoringId] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!token) return;
-    listResumes(token)
-      .then((page) => setResumes(page.content))
-      .catch(() => setError("Failed to load resumes"));
-  }, [token]);
+  const {
+    data: page,
+    error: loadError,
+    loading,
+  } = useFetch(() => listResumes(token!), [token]);
+  const resumes = page?.content ?? [];
+  const error = actionError ?? loadError;
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
   const score = (r: ResumeVersion) => {
-    setError(null);
+    setActionError(null);
     setScoringId(r.resumeVersionId);
     scoreResume(r.resumeVersionId, r.jobPostingId, token)
       .then(setReport)
-      .catch(() => setError("Scoring failed — try again in a moment."))
+      .catch(() => setActionError("Scoring failed — try again in a moment."))
       .finally(() => setScoringId(null));
   };
 
@@ -44,7 +44,9 @@ export function ResumesPage() {
 
       {error && <Alert variant="error" className="mb-4">{error}</Alert>}
 
-      {resumes.length === 0 && !error ? (
+      {loading ? (
+        <SkeletonList rows={4} rowClassName="h-14" />
+      ) : resumes.length === 0 && !error ? (
         <EmptyState
           title="No tailored resumes yet"
           description="Open a job and click “Tailor resume” to generate your first one."
@@ -87,7 +89,9 @@ export function ResumesPage() {
                         size="sm"
                         onClick={() =>
                           downloadResumePdf(r.resumeVersionId, token).catch(() =>
-                            setError("Download failed — the PDF may still be rendering; try again."),
+                            setActionError(
+                              "Download failed — the PDF may still be rendering; try again.",
+                            ),
                           )
                         }
                       >

@@ -1,6 +1,7 @@
-import { useEffect, useState, type ComponentType, type SVGProps } from "react";
+import { type ComponentType, type SVGProps } from "react";
 import { Link } from "react-router-dom";
 import { getProfile } from "../api";
+import { useFetch } from "../lib/useFetch";
 import { AppLayout } from "../components/AppLayout";
 import {
   BriefcaseIcon,
@@ -79,16 +80,15 @@ const STEPS = [
 
 export function HomePage() {
   const token = localStorage.getItem("token");
-  const [fullName, setFullName] = useState<string | null>(null);
+  const { data: profile } = useFetch(
+    () => (token ? getProfile(token) : Promise.resolve(null)),
+    [token],
+  );
 
-  useEffect(() => {
-    if (!token) return;
-    getProfile(token)
-      .then((p) => setFullName(p.fullName))
-      .catch(() => {});
-  }, [token]);
-
-  // Greet with the first name from the profile; fall back to a generic hero.
+  // Greet with the first name from the profile; fall back to a generic hero. A failed/absent
+  // profile fetch just means no greeting name — never blocks the page, so useFetch's error state
+  // is intentionally unused here.
+  const fullName = profile?.fullName ?? null;
   const greetingName = fullName?.trim() ? fullName.trim().split(/\s+/)[0] : null;
 
   return (

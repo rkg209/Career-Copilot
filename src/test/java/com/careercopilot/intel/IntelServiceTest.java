@@ -46,7 +46,7 @@ class IntelServiceTest {
   void browseCompanies_aggregatesOnlyPublishedRows() {
     when(companyIntelRepository.findDistinctPublishedCompanies(PageRequest.of(0, 20)))
         .thenReturn(new PageImpl<>(List.of("Acme Corp"), PageRequest.of(0, 20), 1));
-    when(companyIntelRepository.findByCompanyAndPublishedTrue("Acme Corp"))
+    when(companyIntelRepository.findByCompanyInAndPublishedTrue(List.of("Acme Corp")))
         .thenReturn(
             List.of(
                 publishedEntry(

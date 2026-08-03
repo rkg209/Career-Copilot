@@ -17,7 +17,13 @@ public class PiiScrubber {
 
   private static final int MAX_LENGTH = 2000;
 
-  private static final Pattern URL = Pattern.compile("https?://\\S+");
+  // Scheme-qualified URLs, plus bare "domain/path" mentions (e.g. "linkedin.com/in/janedoe") —
+  // the mandatory trailing "/path" keeps this from false-positiving on "Node.js" or version
+  // strings like "3.10", which never have a path segment after them.
+  private static final Pattern URL =
+      Pattern.compile(
+          "https?://\\S+" + "|\\b(?:[a-z0-9-]+\\.)+[a-z]{2,}/[\\w./?=&%-]*",
+          Pattern.CASE_INSENSITIVE);
 
   /** Two consecutive Title-Cased words look like a person's name unless they're a known term. */
   private static final Pattern CAPITALIZED_BIGRAM =

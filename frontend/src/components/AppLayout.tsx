@@ -64,6 +64,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-20 border-b bg-canvas/80 backdrop-blur">
         <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Brand />
@@ -85,7 +91,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} email={email} />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>
       </main>
 

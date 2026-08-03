@@ -19,6 +19,7 @@ import com.careercopilot.tailoring.render.RenderFailedException;
 import com.careercopilot.tailoring.render.RenderTimeoutException;
 import com.careercopilot.tailoring.render.TemplateRegistry;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -60,6 +61,9 @@ public class CoverLetterService {
     this.coverLetterRepository = coverLetterRepository;
   }
 
+  @Timed(
+      value = "tailoring.coverLetter",
+      percentiles = {0.5, 0.99})
   public CoverLetterResponse generate(String email, CoverLetterRequest request) {
     User user = resolveUser(email);
     String templateId = request.templateId() != null ? request.templateId() : DEFAULT_TEMPLATE;

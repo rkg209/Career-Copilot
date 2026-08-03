@@ -1,0 +1,111 @@
+{
+  "logs": [
+    {
+      "name": "email_basic",
+      "text": "Reach out to the candidate at jane.doe@acme.com after the loop."
+    },
+    {
+      "name": "email_plus_addressing",
+      "text": "Feedback sent to recruiter+jobs@example.co.in for tracking."
+    },
+    {
+      "name": "email_subdomain",
+      "text": "CC hiring.team@interviews.bigco.io on the debrief."
+    },
+    {
+      "name": "phone_us_dashes",
+      "text": "Interviewer called back at 415-555-0134 to confirm the loop."
+    },
+    {
+      "name": "phone_us_dots",
+      "text": "Recruiter's direct line is 415.555.0134 for scheduling."
+    },
+    {
+      "name": "phone_indian_plus91_spaced",
+      "text": "Candidate can be reached at +91 98765 43210 before noon IST."
+    },
+    {
+      "name": "phone_indian_bare",
+      "text": "Emergency contact number was 9876543210 on file."
+    },
+    {
+      "name": "phone_area_code_parens",
+      "text": "The office landline is (022) 2345-6789 for the Mumbai team."
+    },
+    {
+      "name": "ssn_dashed",
+      "text": "Background check form listed SSN 123-45-6789 for verification."
+    },
+    {
+      "name": "url_portfolio",
+      "text": "Portfolio is at https://janedoe.dev/projects for reference."
+    },
+    {
+      "name": "url_github",
+      "text": "Reviewed the candidate's repos at https://github.com/janedoe94 before the call."
+    },
+    {
+      "name": "linkedin_full_url",
+      "text": "Sourced this candidate via https://www.linkedin.com/in/janedoe94/ last week."
+    },
+    {
+      "name": "linkedin_bare_handle",
+      "text": "Their LinkedIn handle is linkedin.com/in/janedoe94 if you want to check references."
+    },
+    {
+      "name": "full_name_in_prose",
+      "text": "John Smith led the system design round and took detailed notes."
+    },
+    {
+      "name": "full_name_in_question",
+      "text": "Did John Smith ask about distributed systems during the interview?"
+    },
+    {
+      "name": "full_name_with_title",
+      "text": "The hiring manager, Priya Sharma, will follow up with the offer details."
+    },
+    {
+      "name": "full_name_at_start",
+      "text": "Rahul Verma interviewed the candidate for the backend round."
+    },
+    {
+      "name": "email_and_phone_combo",
+      "text": "Contact jane.doe@acme.com or 415-555-0134 if you have questions."
+    },
+    {
+      "name": "name_and_email_combo",
+      "text": "John Smith can be reached at john.smith@acme.com for a reference check."
+    },
+    {
+      "name": "phone_in_question_text",
+      "text": "Should I call the candidate back at 415-555-0134 or send an email instead?"
+    },
+    {
+      "name": "name_in_question_text",
+      "text": "Wasn't it John Smith who mentioned the take-home assignment was too long?"
+    },
+    {
+      "name": "email_uppercase_domain",
+      "text": "Please loop in Recruiter@ACME.COM before finalizing the offer."
+    },
+    {
+      "name": "url_with_tracking_params",
+      "text": "Application came in via https://jobs.acme.com/apply?ref=janedoe&utm=li for tracking."
+    },
+    {
+      "name": "ssn_mid_sentence",
+      "text": "Payroll needs 123-45-6789 on file before the start date."
+    },
+    {
+      "name": "multiple_names_in_prose",
+      "text": "John Smith and Priya Sharma both sat in on the panel interview."
+    }
+  ],
+  "controls": [
+    "We discussed System Design and Dynamic Programming during the round.",
+    "The candidate demonstrated strong Object Oriented design and Data Structures knowledge.",
+    "This was a standard Phone Screen followed by a Final Round with the team.",
+    "The take home assignment covered Big O analysis and a Rate Limiter design.",
+    "New York and San Francisco offices both participated in the debrief."
+  ]
+}

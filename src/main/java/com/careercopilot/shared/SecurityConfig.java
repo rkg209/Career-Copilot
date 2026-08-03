@@ -42,7 +42,13 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
-                        "/api/v1/auth/register", "/api/v1/auth/login", "/actuator/health")
+                        "/api/v1/auth/register",
+                        "/api/v1/auth/login",
+                        "/actuator/health",
+                        "/actuator/health/**",
+                        "/api/v1/docs/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/jobs/for-me")
                     .authenticated()
@@ -50,6 +56,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/intel/**")
                     .permitAll()
+                    .requestMatchers("/actuator/**")
+                    .authenticated()
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

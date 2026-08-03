@@ -16,6 +16,12 @@ public interface CompanyIntelRepository extends JpaRepository<CompanyIntelEntry,
 
   List<CompanyIntelEntry> findByCompanyAndPublishedTrue(String company);
 
+  /**
+   * Batched form of {@link #findByCompanyAndPublishedTrue} for a whole page of companies at once —
+   * avoids an N+1 select when summarizing a page of {@code findDistinctPublishedCompanies}.
+   */
+  List<CompanyIntelEntry> findByCompanyInAndPublishedTrue(List<String> companies);
+
   @Query(
       "select distinct e.company from CompanyIntelEntry e where e.published = true order by e.company asc")
   Page<String> findDistinctPublishedCompanies(Pageable pageable);

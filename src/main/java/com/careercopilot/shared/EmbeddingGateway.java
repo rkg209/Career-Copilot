@@ -1,5 +1,6 @@
 package com.careercopilot.shared;
 
+import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ public class EmbeddingGateway {
    * Embeds the given text (after PII redaction). Throws {@link EmbeddingUnavailableException} when
    * the provider is unreachable — callers leave the entry PENDING and retry later.
    */
+  @Timed(
+      value = "embedding.embed",
+      percentiles = {0.5, 0.99})
   public float[] embed(UUID userId, LlmTask task, String text) {
     String redacted = piiRedactionService.redact(text);
     long start = System.currentTimeMillis();
